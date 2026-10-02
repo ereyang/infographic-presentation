@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Infographic Presentation</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --card: #ffffff; --ink: #1f2540; --sub: #5d6480; --line: #dfe3ef;
+    --main: #4f5bd5; --main-dark: #3c47b3; --main-soft: #eceefd;
+    --ok: #1f9d6b; --ok-soft: #e3f6ee; --warn: #d9480f; --warn-soft: #fff1e8; --rec: #e03131;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.6;
+    font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 20px; margin: 0; flex: 1; min-width: 200px; }
+  header h1 span { color: var(--main); }
+  #who { font-weight: 700; color: var(--main-dark); background: var(--main-soft); padding: 4px 12px; border-radius: 999px; }
+  #who:empty { display: none; }
+  #sync { font-size: 13px; color: var(--sub); } #sync.fail { color: var(--warn); } #sync:empty { display: none; }
+  main { max-width: 920px; margin: 0 auto; padding: 20px 16px 60px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); padding: 9px 16px; font-weight: 600; }
+  button:hover:not(:disabled) { border-color: var(--main); color: var(--main-dark); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--main); border-color: var(--main); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--main-dark); color: #fff; }
+  button.small { padding: 5px 10px; font-size: 14px; }
+  button.rec { background: var(--rec); border-color: var(--rec); color: #fff; }
+  button.rec:hover:not(:disabled) { color: #fff; filter: brightness(.92); }
+
+  /* 진행 표시줄 */
+  #stepper { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 18px; overflow-x: auto; }
+  #stepper li { flex: 1; min-width: 96px; }
+  #stepper button { width: 100%; padding: 8px 4px; font-size: 13px; border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--sub); }
+  #stepper .num { width: 26px; height: 26px; border-radius: 50%; background: var(--line); color: var(--sub);
+    display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+  #stepper .done .num { background: var(--ok); color: #fff; }
+  #stepper .now button { border-color: var(--main); background: var(--main-soft); color: var(--main-dark); }
+  #stepper .now .num { background: var(--main); color: #fff; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; }
+  .card h2 { margin: 0 0 4px; font-size: 22px; }
+  .card h2 small { display: block; font-size: 13px; color: var(--main); letter-spacing: .08em; }
+  .guide { background: var(--main-soft); border-radius: 12px; padding: 12px 16px; margin: 14px 0 20px; color: #333a63; }
+  .guide p { margin: 0 0 6px; } .guide p:last-child { margin: 0; }
+  .guide ul { margin: 6px 0 0; padding-left: 20px; }
+  label.field { display: block; font-weight: 700; margin: 18px 0 4px; }
+  .hint { color: var(--sub); font-size: 14px; margin: 0 0 6px; }
+  input[type=text], input[type=password], textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 10px; background: #fff; color: var(--ink); }
+  input[type=text]:focus, input[type=password]:focus, textarea:focus { outline: 2px solid var(--main); border-color: var(--main); }
+  textarea { resize: vertical; min-height: 70px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .row .n { width: 24px; text-align: center; color: var(--sub); font-weight: 700; }
+  .nav { display: flex; justify-content: space-between; margin-top: 18px; gap: 8px; }
+  .msg { color: var(--warn); background: var(--warn-soft); border-radius: 10px; padding: 8px 12px; margin-top: 14px; }
+  .msg:empty { display: none; }
+  .okmsg { color: #0f6b47; background: var(--ok-soft); border-radius: 10px; padding: 10px 14px; margin-top: 14px; }
+
+  .orgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .org { text-align: left; padding: 16px; border-radius: 14px; border-width: 2px; font-weight: 400; }
+  .org b { display: block; font-size: 17px; }
+  .org .ico { font-size: 28px; }
+  .org span { color: var(--sub); font-size: 14px; }
+  .org.sel { border-color: var(--main); background: var(--main-soft); }
+  .org.sel b::after { content: " ✓"; color: var(--main); }
+
+  .checks { list-style: none; padding: 0; margin: 8px 0; }
+  .checks label { display: flex; gap: 8px; align-items: center; padding: 4px 0; cursor: pointer; }
+  .checks input { width: 18px; height: 18px; accent-color: var(--main); }
+  .preview { margin-top: 14px; text-align: center; background: #f0f2f8; border-radius: 12px; padding: 12px; }
+  .preview img { max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 0 auto; }
+  .recbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--rec); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  audio, video { max-width: 100%; }
+  video { border-radius: 10px; background: #000; max-height: 60vh; }
+  progress { width: 100%; height: 14px; accent-color: var(--main); }
+
+  dl.sum { display: grid; grid-template-columns: 170px 1fr; gap: 8px 14px; margin: 14px 0; }
+  dl.sum dt { font-weight: 700; color: var(--sub); }
+  dl.sum dd { margin: 0; white-space: pre-wrap; word-break: break-word; }
+  dl.sum dd.empty { color: var(--warn); }
+  dl.sum img { max-width: 100%; max-height: 420px; border-radius: 8px; border: 1px solid var(--line); }
+  dl.sum ol { margin: 0; padding-left: 20px; }
+  h3 { margin: 22px 0 6px; font-size: 17px; }
+
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+  #drop { border: 2px dashed var(--line); border-radius: 14px; padding: 18px; text-align: center; color: var(--sub); margin: 12px 0; }
+  #drop.over { border-color: var(--main); background: var(--main-soft); }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+  th { background: #f0f2f8; font-size: 14px; }
+  td.y { color: var(--ok); font-weight: 700; } td.n { color: #b0b5c8; }
+  td button.link { border: 0; background: none; color: var(--main-dark); text-decoration: underline; padding: 0; }
+  tr.cur { background: var(--main-soft); }
+  .hidden { display: none !important; }
+  @media (max-width: 600px) { dl.sum { grid-template-columns: 1fr; gap: 2px; } dl.sum dd { margin-bottom: 10px; } .card { padding: 18px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Infographic</span> Presentation</h1>
+  <span id="who"></span>
+  <span id="sync"></span>
+  <button id="btnDraft" class="small" title="아직 끝내지 못했어도 지금까지 한 작업을 파일로 내려받아 선생님께 낼 수 있습니다">중간 저장 파일</button>
+  <button id="btnReset" class="small">새로 시작</button>
+  <button id="btnMode" class="small hidden">학생 화면으로</button>
+</header>
+
+<main>
+  <section id="studentView">
+    <ol id="stepper"></ol>
+    <div class="card" id="panel"></div>
+  </section>
+
+  <section id="teacherView" class="hidden">
+    <div class="card" id="tLock"></div>
+    <div id="tMain" class="hidden">
+    <div class="card">
+      <h2><small>TEACHER</small>교사용 Dashboard</h2>
+      <div class="guide">
+        <p><b>[온라인 기록 불러오기]</b>(자동 수집을 설정한 경우에만 보임)를 누르면 학생이 파일을 내지 않아도 지금까지 입력한 글 기록이 모두 표에 나타납니다. 그래픽·녹음·영상은 아래의 제출 파일로 받습니다.</p>
+        <p>학생들이 낸 <b>제출 파일(학번_이름_제출.zip)</b>을 한꺼번에 불러오세요. 아직 끝내지 못한 학생은 학생 화면의 [중간 저장 파일] 버튼으로 만든 <b>학번_이름_중간저장.zip</b>을 내면, 그때까지 한 작업이 표와 Excel에 나타납니다. 여러 파일을 한 번에 선택하거나 아래 칸에 끌어다 놓을 수 있습니다.</p>
+        <p>불러온 자료는 이 브라우저에 보관되어 다시 열어도 유지됩니다. 같은 학번을 다시 불러오면 더 늦게 제출한 파일로 바뀝니다.</p>
+      </div>
+      <div id="drop">
+        <button class="primary" id="btnImport">제출 파일 불러오기</button>
+        <input type="file" id="fileImport" accept=".zip" multiple class="hidden">
+        <div>또는 ZIP 파일들을 여기에 끌어다 놓기</div>
+      </div>
+      <div class="tools">
+        <b id="tCount"></b>
+        <span style="flex:1"></span>
+        <button id="btnOnline" class="primary hidden">온라인 기록 불러오기</button>
+        <button id="btnXlsx">전체 학생 결과 Excel 다운로드</button>
+        <button id="btnZipG">전체 그래픽 ZIP 다운로드</button>
+        <button id="btnZipV">전체 발표 영상 ZIP 다운로드</button>
+        <button id="btnClear" class="small">전체 비우기</button>
+      </div>
+      <div class="msg" id="tMsg"></div>
+      <p class="hint">✓ 교사가 받은 자료 · ○ 학생 기기에서는 완료했지만 파일은 아직 받지 않음 · - 아직 안 함</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>학번</th><th>이름</th><th>내용</th><th>Organizer</th><th>Prompt</th><th>Graphic</th><th>발표</th><th>제출</th></tr></thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card hidden" id="tDetail" style="margin-top:16px"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ===================== 설정 ===================== */
+// 학생의 글 기록을 자동으로 모을 Google Apps Script 웹 앱 주소 (google-apps-script.gs 의 설치 방법 참고).
+// 비워 두면 자동 수집 없이 제출 ZIP 방식으로만 동작한다.
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyUcMYwpNwoAWTM56IuGjvSNNfMtsXsst2HyxHquIbDsL06l532-sGD2ElABXrwPJcJ/exec';
+
+/* ===================== 공통 도구 ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const safeName = s => String(s ?? '').trim().replace(/[\\/:*?"<>|\s]+/g, '');
+const baseName = d => safeName(d.studentId) + '_' + safeName(d.name);
+const pad = n => String(n).padStart(2, '0');
+const fmtTime = iso => { if (!iso) return ''; const d = new Date(iso);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtSec = s => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
+
+function download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+
+/* ---------- IndexedDB (이미지·음성·영상 저장) ---------- */
+let dbP;
+function db() {
+  return dbP ||= new Promise((res, rej) => {
+    const r = indexedDB.open('infographic-presentation', 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('blobs'); r.result.createObjectStore('subs'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function idb(store, mode, fn) {
+  const d = await db();
+  return new Promise((res, rej) => {
+    const tx = d.transaction(store, mode); const rq = fn(tx.objectStore(store));
+    tx.oncomplete = () => res(rq && rq.result); tx.onerror = tx.onabort = () => rej(tx.error);
+  });
+}
+const idbGet = (s, k) => idb(s, 'readonly', o => o.get(k));
+const idbPut = (s, k, v) => idb(s, 'readwrite', o => o.put(v, k));
+const idbDel = (s, k) => idb(s, 'readwrite', o => o.delete(k));
+const idbAll = s => idb(s, 'readonly', o => o.getAll());
+const idbClear = s => idb(s, 'readwrite', o => o.clear());
+
+/* ---------- ZIP 만들기/읽기 (압축 없이 저장) ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+
+// files: [{name, blob}] (blob은 Blob 또는 문자열)
+async function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  const now = new Date();
+  const time = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const date = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  let offset = 0;
+  for (const f of files) {
+    const data = typeof f.blob === 'string' ? enc.encode(f.blob) : new Uint8Array(await f.blob.arrayBuffer());
+    const name = enc.encode(f.name), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(10, time, true); lh.setUint16(12, date, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
+    parts.push(lh.buffer, name, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(12, time, true); ch.setUint16(14, date, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+    ch.setUint32(42, offset, true);
+    central.push(ch.buffer, name);
+    offset += 30 + name.length + data.length;
+  }
+  const cdSize = central.reduce((n, p) => n + p.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+}
+
+// 반환: { 파일명: Uint8Array }
+async function readZip(blob) {
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  const dv = new DataView(buf.buffer), dec = new TextDecoder();
+  let e = buf.length - 22;
+  while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('ZIP 파일이 아닙니다');
+  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  const out = {};
+  for (let i = 0; i < n; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('ZIP 구조 오류');
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
+    const lho = dv.getUint32(p + 42, true);
+    const name = dec.decode(buf.subarray(p + 46, p + 46 + nlen));
+    const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+    let data = buf.subarray(start, start + csize);
+    if (method === 8) {
+      const st = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      data = new Uint8Array(await new Response(st).arrayBuffer());
+    } else if (method !== 0) throw new Error('지원하지 않는 압축 방식');
+    if (!name.endsWith('/')) out[name.split('/').pop()] = data;
+    p += 46 + nlen + xlen + clen;
+  }
+  return out;
+}
+
+/* ---------- Excel(.xlsx) 만들기 ---------- */
+async function makeXlsx(rows) {
+  const x = s => esc(String(s ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''));
+  const col = i => String.fromCharCode(65 + i);
+  const sheet = rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) =>
+    `<c r="${col(ci)}${ri + 1}" t="inlineStr"${ri === 0 ? ' s="1"' : ''}><is><t xml:space="preserve">${x(v)}</t></is></c>`).join('') + '</row>').join('');
+  const H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  const widths = [10, 10, 28, 40, 50, 20, 60, 10, 18, 30, 32, 18];
+  const blob = await makeZip([
+    { name: '[Content_Types].xml', blob: H + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+    { name: '_rels/.rels', blob: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: 'xl/workbook.xml', blob: H + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Results" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+    { name: 'xl/_rels/workbook.xml.rels', blob: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: 'xl/styles.xml', blob: H + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="맑은 고딕"/></font><font><b/><sz val="11"/><name val="맑은 고딕"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>' },
+    { name: 'xl/worksheets/sheet1.xml', blob: H + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>' + widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('') + `</cols><sheetData>${sheet}</sheetData></worksheet>` },
+  ]);
+  return new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+
+/* ===================== 학생 화면 ===================== */
+const STEPS = ['학생 정보', '내용 정리', 'Organizer', 'Design Prompt', 'Graphic', 'Presentation', '제출'];
+const ORGS = [
+  ['Statistics', '📊', '숫자나 비율 등의 통계 자료를 효과적으로 보여줄 때'],
+  ['Compare & Contrast', '⚖️', '두 가지 이상의 대상의 공통점과 차이점을 보여줄 때'],
+  ['Process', '🔁', '어떤 과정이나 순서를 단계별로 보여줄 때'],
+  ['Cause & Effect', '🔗', '원인과 그 결과를 연결해서 보여줄 때'],
+  ['Timeline', '🕒', '시간의 흐름이나 사건의 변화를 보여줄 때'],
+  ['Problem & Solution', '💡', '문제와 그 해결 방법을 보여줄 때'],
+];
+const CHECK4 = ['핵심 메시지가 잘 드러나는가?', '선택한 Graphic Organizer가 잘 표현되었는가?', '영어 문장과 단어의 오류가 없는가?', '글자가 잘 보이는가?', '필요한 정보가 빠짐없이 들어갔는가?'];
+const CHECK6 = ['학번과 이름이 정확한가?', '내용 입력을 완료했는가?', 'Graphic Organizer를 적절하게 선택했는가?', '디자인 프롬프트를 작성했는가?', '완성된 그래픽을 업로드했는가?', '영어 발표 녹음을 완료했는가?'];
+const LS_KEY = 'infographic-presentation-v1';
+const blank = () => ({ step: 0, studentId: '', name: '', title: '', mainMessage: '', keyInfo: [''], organizer: '',
+  prompt: '', check4: [], check6: [], audioSec: 0, videoExt: '', submittedAt: '' });
+
+let state = blank();
+try { state = Object.assign(blank(), JSON.parse(localStorage.getItem(LS_KEY) || '{}')); } catch (e) {}
+const save = () => { localStorage.setItem(LS_KEY, JSON.stringify(state)); queueSync(); };
+
+// 이미지·음성·영상은 IndexedDB에 저장하고 메모리에 올려 둔다
+const media = { graphic: null, audio: null, video: null }, urls = {};
+async function setMedia(key, blob) {
+  media[key] = blob;
+  if (urls[key]) { URL.revokeObjectURL(urls[key]); delete urls[key]; }
+  if (blob) await idbPut('blobs', key, blob); else await idbDel('blobs', key);
+  queueSync();
+}
+const mediaUrl = key => media[key] ? (urls[key] ||= URL.createObjectURL(media[key])) : '';
+
+// 각 단계 완료 여부 (0~5)
+function doneList() {
+  return [
+    !!(state.studentId.trim() && state.name.trim()),
+    !!(state.title.trim() && state.mainMessage.trim() && state.keyInfo.some(k => k.trim())),
+    !!state.organizer,
+    !!state.prompt.trim(),
+    !!media.graphic,
+    !!media.audio,
+  ];
+}
+const NEED = ['학번과 이름을 모두 입력하세요.', 'Title, Main Message를 입력하고 Key Information을 하나 이상 입력하세요.',
+  'Graphic Organizer를 하나 선택하세요.', '그래픽 디자인 프롬프트를 작성하세요.', '완성한 그래픽 이미지를 업로드하세요.', '영어 발표를 녹음하세요.'];
+
+let recorder = null, recStream = null, recTimer = null, busy = false;
+
+function go(step) {
+  if (busy) return;
+  if (recorder) { alert('녹음 중입니다. 먼저 녹음을 종료하세요.'); return; }
+  state.step = Math.max(0, Math.min(6, step)); save(); render();
+  window.scrollTo({ top: 0 });
+}
+function next() {
+  const d = doneList();
+  if (!d[state.step]) { $('#msg').textContent = NEED[state.step]; return; }
+  go(state.step + 1);
+}
+
+function render() {
+  const d = doneList();
+  $('#who').textContent = d[0] ? state.studentId.trim() + ' ' + state.name.trim() : '';
+  $('#stepper').innerHTML = STEPS.map((s, i) => {
+    const done = i < 6 ? d[i] : !!state.submittedAt;
+    return `<li class="${i === state.step ? 'now' : ''} ${done ? 'done' : ''}"><button data-step="${i}"><span class="num">${done ? '✓' : i}</span>${s}</button></li>`;
+  }).join('');
+  const p = $('#panel');
+  p.innerHTML = VIEWS[state.step]() + `<div class="msg" id="msg"></div>` +
+    `<div class="nav">${state.step > 0 ? '<button id="prev">← 이전</button>' : '<span></span>'}${state.step < 6 ? '<button class="primary" id="next">다음 →</button>' : ''}</div>`;
+  if ($('#prev')) $('#prev').onclick = () => go(state.step - 1);
+  if ($('#next')) $('#next').onclick = next;
+  BIND[state.step]();
+}
+$('#stepper').onclick = e => { const b = e.target.closest('button'); if (b) go(+b.dataset.step); };
+
+const head = (n, title) => `<h2><small>STEP ${n}</small>${title}</h2>`;
+// 입력칸과 state를 연결
+function bindText(sel, key) {
+  const el = $(sel);
+  el.value = state[key];
+  el.oninput = () => { state[key] = el.value; save(); if (key === 'studentId' || key === 'name') updateWho(); };
+}
+function updateWho() { $('#who').textContent = state.studentId.trim() && state.name.trim() ? state.studentId.trim() + ' ' + state.name.trim() : ''; }
+
+const VIEWS = [
+  () => head(0, '학생 정보를 입력하세요') +
+    `<div class="guide"><p>학번과 이름을 정확하게 입력하세요. 입력한 정보는 이후 여러분의 그래픽과 발표 결과에 자동으로 연결됩니다.</p></div>
+     <label class="field" for="sid">학번</label><input type="text" id="sid" placeholder="예: 20215" inputmode="numeric" autocomplete="off">
+     <label class="field" for="sname">이름</label><input type="text" id="sname" placeholder="예: 김민지" autocomplete="off">`,
+
+  () => head(1, '내용 정리') +
+    `<div class="guide"><p>그래픽으로 표현하고 싶은 내용을 먼저 정리해 보세요.</p>
+     <p>아직 디자인을 생각할 필요는 없습니다. 내가 다른 사람에게 무엇을 전달하고 싶은지 생각하면서 제목, 핵심 메시지, 핵심 정보를 입력하세요.</p></div>
+     <label class="field" for="title">Title</label>
+     <p class="hint">그래픽의 주제를 간단하고 분명하게 나타내는 제목을 입력하세요.</p>
+     <input type="text" id="title">
+     <label class="field" for="mainMessage">Main Message</label>
+     <p class="hint">이 그래픽을 통해 사람들이 가장 먼저 이해했으면 하는 내용을 한 문장으로 작성하세요.</p>
+     <textarea id="mainMessage" rows="2"></textarea>
+     <label class="field">Key Information</label>
+     <p class="hint">핵심 메시지를 뒷받침하는 중요한 정보, 숫자, 사실, 예시 등을 입력하세요.</p>
+     <div id="keys"></div>
+     <button id="addKey">+ Add Information</button>`,
+
+  () => head(2, '시각화 방법 선택') +
+    `<div class="guide"><p>정리한 내용을 어떤 방식으로 보여줄지 선택하세요.</p>
+     <p>내용의 특징을 생각하고 가장 적절한 Graphic Organizer를 선택하세요.</p></div>
+     <div class="orgs">${ORGS.map(([n, ico, desc]) =>
+       `<button class="org ${state.organizer === n ? 'sel' : ''}" data-org="${esc(n)}"><span class="ico">${ico}</span><b>${esc(n)}</b><span>${desc}</span></button>`).join('')}</div>`,
+
+  () => head(3, '그래픽 디자인 프롬프트 작성') +
+    `<div class="guide"><p>이제 실제 그래픽을 어떻게 만들 것인지 구체적으로 계획해 보세요.</p>
+     <p>외부의 이미지 생성 AI나 디자인 도구에 입력할 수 있는 그래픽 디자인 프롬프트를 직접 작성하세요. 한국어로 자유롭게 써도 됩니다.</p>
+     <ul><li>어떤 이미지를 넣을 것인가?</li><li>무엇을 가장 크게 또는 눈에 띄게 보여줄 것인가?</li><li>정보는 어디에 배치할 것인가?</li>
+     <li>어떤 색상을 사용할 것인가?</li><li>어떤 분위기나 스타일로 만들 것인가?</li>
+     <li>선택한 Graphic Organizer${state.organizer ? ` (<b>${esc(state.organizer)}</b>)` : ''}를 어떻게 시각적으로 표현할 것인가?</li></ul></div>
+     <label class="field" for="prompt">Graphic Design Prompt</label>
+     <textarea id="prompt" rows="9"></textarea>
+     <p class="hint" style="margin-top:8px"><b>예시</b> 가운데에 스마트폰을 사용하는 청소년을 크게 배치하고, 85%라는 숫자를 가장 눈에 띄게 보여준다. 왼쪽에는 스마트폰 사용 통계를, 오른쪽에는 과도한 사용으로 인한 문제를 배치한다. 파란색과 흰색을 사용하여 깔끔하고 현대적인 인포그래픽으로 만든다.</p>`,
+
+  () => head(4, '최종 그래픽 업로드') +
+    `<div class="guide"><p>외부에서 그래픽을 완성한 후 이곳에 업로드하세요.</p>
+     <p>ChatGPT, Claude, Canva 등의 도구를 활용하여 그래픽을 제작할 수 있습니다.</p>
+     <p>그래픽에는 최종적으로 사용할 영어 텍스트를 모두 포함하세요.</p></div>
+     <h3>업로드 전 체크리스트</h3>
+     <ul class="checks" id="check4">${CHECK4.map((c, i) => `<li><label><input type="checkbox" data-i="${i}" ${state.check4[i] ? 'checked' : ''}>${c}</label></li>`).join('')}</ul>
+     <input type="file" id="gfile" accept="image/*" class="hidden">
+     <button class="primary" id="gpick">${media.graphic ? '이미지 교체' : '이미지 업로드'}</button>
+     ${media.graphic ? `<div class="preview"><img src="${mediaUrl('graphic')}" alt="업로드한 그래픽 미리보기"></div>` : ''}`,
+
+  () => head(5, '영어 발표 녹음') +
+    `<div class="guide"><p>완성된 그래픽을 보면서 영어로 발표해 보세요.</p>
+     <p>그래픽에 있는 내용을 그대로 읽기만 하기보다는, 그래픽의 핵심 내용을 듣는 사람이 이해할 수 있도록 자연스럽게 설명해 보세요.</p>
+     <p>녹음하기 전에 발표 내용을 충분히 연습하세요.</p></div>
+     <div class="recbar">${recorder
+       ? `<span class="dot"></span><b>녹음 중</b> <span id="rtime">0:00</span><button class="rec" id="rstop">■ 녹음 종료</button>`
+       : media.audio
+         ? `<audio controls src="${mediaUrl('audio')}"></audio><button id="rstart">다시 녹음</button>`
+         : `<button class="rec" id="rstart">● 녹음 시작</button><span class="hint">버튼을 누르면 마이크 사용 허용을 묻습니다.</span>`}</div>
+     ${media.graphic ? `<div class="preview"><img src="${mediaUrl('graphic')}" alt="최종 그래픽"></div>` : '<p class="msg">STEP 4에서 그래픽을 먼저 업로드하면 이곳에 크게 표시됩니다.</p>'}`,
+
+  () => {
+    const d = doneList(), all = d.every(Boolean);
+    const v = (ok, html) => ok ? `<dd>${html}</dd>` : '<dd class="empty">아직 입력하지 않았습니다</dd>';
+    const keys = state.keyInfo.filter(k => k.trim());
+    return head(6, '최종 제출') +
+    `<div class="guide"><p>지금까지 작업한 내용을 확인하세요. 고칠 곳이 있으면 위의 단계를 눌러 수정할 수 있습니다.</p>
+     <p><b>① 발표 영상 만들기 → ② 체크리스트 확인 → ③ 최종 제출</b> 순서로 진행합니다. [최종 제출]을 누르면 제출 파일(ZIP)이 내려받아지고, <b>그 파일을 선생님께 내야 제출이 끝납니다.</b></p></div>
+     <dl class="sum">
+       <dt>학번</dt>${v(state.studentId.trim(), esc(state.studentId))}
+       <dt>이름</dt>${v(state.name.trim(), esc(state.name))}
+       <dt>Title</dt>${v(state.title.trim(), esc(state.title))}
+       <dt>Main Message</dt>${v(state.mainMessage.trim(), esc(state.mainMessage))}
+       <dt>Key Information</dt>${v(keys.length, '<ol>' + keys.map(k => `<li>${esc(k)}</li>`).join('') + '</ol>')}
+       <dt>Graphic Organizer</dt>${v(d[2], esc(state.organizer))}
+       <dt>Graphic Design Prompt</dt>${v(d[3], esc(state.prompt))}
+       <dt>Final Graphic</dt>${v(d[4], `<img src="${mediaUrl('graphic')}" alt="최종 그래픽">`)}
+       <dt>Presentation Recording</dt>${v(d[5], `<audio controls src="${mediaUrl('audio')}"></audio>`)}
+     </dl>
+     <h3>① 최종 발표 영상 (그래픽 + 발표 음성)</h3>
+     <div id="vbox">${media.video
+       ? `<video controls src="${mediaUrl('video')}"></video><p class="hint">${esc(baseName(state))}_Presentation.${state.videoExt}</p>`
+       : `<p class="hint">영상을 만드는 데 발표 길이만큼 시간이 걸립니다${state.audioSec ? ` (약 ${fmtSec(state.audioSec)})` : ''}. 만드는 동안 이 탭을 닫거나 다른 탭으로 옮기지 마세요.</p>`}</div>
+     <button id="vmake" ${d[4] && d[5] ? '' : 'disabled'}>${media.video ? '영상 다시 만들기' : '발표 영상 만들기'}</button>
+     <h3>② 최종 확인 체크리스트</h3>
+     <ul class="checks" id="check6">${CHECK6.map((c, i) => `<li><label><input type="checkbox" data-i="${i}" ${state.check6[i] ? 'checked' : ''}>${c}</label></li>`).join('')}</ul>
+     <h3>③ 제출</h3>
+     <button class="primary" id="submit">최종 제출</button>
+     ${!all ? `<p class="msg">아직 완료하지 않은 단계가 있습니다: ${d.map((x, i) => x ? '' : STEPS[i]).filter(Boolean).join(', ')}</p>` : ''}
+     ${state.submittedAt ? `<p class="okmsg">${fmtTime(state.submittedAt)}에 제출 파일을 만들었습니다. 내려받은 <b>${esc(baseName(state))}_제출.zip</b> 파일을 선생님께 제출하세요. 내용을 고쳤다면 다시 [최종 제출]을 눌러 새 파일을 내세요.</p>` : ''}`;
+  },
+];
+
+const BIND = [
+  () => { bindText('#sid', 'studentId'); bindText('#sname', 'name'); },
+
+  () => {
+    bindText('#title', 'title'); bindText('#mainMessage', 'mainMessage');
+    const box = $('#keys');
+    const draw = () => {
+      box.innerHTML = state.keyInfo.map((k, i) =>
+        `<div class="row"><span class="n">${i + 1}</span><input type="text" data-i="${i}" value="${esc(k)}" placeholder="정보, 숫자, 사실, 예시 등">` +
+        `<button class="small" data-del="${i}" title="삭제" ${state.keyInfo.length < 2 ? 'disabled' : ''}>✕</button></div>`).join('');
+    };
+    draw();
+    box.oninput = e => { state.keyInfo[+e.target.dataset.i] = e.target.value; save(); };
+    box.onclick = e => { const b = e.target.closest('[data-del]'); if (!b) return; state.keyInfo.splice(+b.dataset.del, 1); save(); draw(); };
+    $('#addKey').onclick = () => { state.keyInfo.push(''); save(); draw(); box.querySelector('.row:last-child input').focus(); };
+  },
+
+  () => { $('.orgs').onclick = e => { const b = e.target.closest('.org'); if (!b) return; state.organizer = b.dataset.org; save(); render(); }; },
+
+  () => bindText('#prompt', 'prompt'),
+
+  () => {
+    bindChecks('#check4', 'check4');
+    $('#gpick').onclick = () => $('#gfile').click();
+    $('#gfile').onchange = async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        await setMedia('graphic', await toPng(f));
+        await setMedia('video', null); state.videoExt = ''; save();   // 그래픽이 바뀌면 영상도 다시 만들어야 한다
+        render();
+      } catch (err) { $('#msg').textContent = '이미지를 읽을 수 없습니다. PNG 또는 JPG 파일을 올려 주세요.'; }
+    };
+  },
+
+  () => {
+    if ($('#rstart')) $('#rstart').onclick = startRec;
+    if ($('#rstop')) $('#rstop').onclick = () => recorder && recorder.stop();
+  },
+
+  () => {
+    bindChecks('#check6', 'check6');
+    $('#vmake').onclick = buildVideo;
+    $('#submit').onclick = submit;
+  },
+];
+
+function bindChecks(sel, key) {
+  $(sel).onchange = e => { state[key][+e.target.dataset.i] = e.target.checked; save(); };
+}
+
+// 업로드한 이미지를 PNG로 통일 (너무 큰 이미지는 긴 변 3000px로 줄임)
+async function toPng(file) {
+  const img = await createImageBitmap(file);
+  const s = Math.min(1, 3000 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/png'));
+}
+
+/* ---------- 녹음 ---------- */
+async function startRec() {
+  if (media.audio && !confirm('이전 녹음을 지우고 다시 녹음할까요?')) return;
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    $('#msg').textContent = '이 브라우저에서는 녹음을 사용할 수 없습니다. 최신 Chrome 또는 Edge에서 https 주소로 열어 주세요.'; return;
+  }
+  try { recStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { $('#msg').textContent = '마이크를 사용할 수 없습니다. 주소창의 마이크 권한을 허용했는지, 마이크가 연결되어 있는지 확인하세요.'; return; }
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(m => MediaRecorder.isTypeSupported(m));
+  const rec = new MediaRecorder(recStream, mime ? { mimeType: mime } : {});
+  const chunks = [], t0 = Date.now();
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.onstop = async () => {
+    clearInterval(recTimer); recStream.getTracks().forEach(t => t.stop()); recorder = null;
+    await setMedia('audio', new Blob(chunks, { type: (rec.mimeType || 'audio/webm').split(';')[0] }));
+    await setMedia('video', null);
+    state.audioSec = Math.round((Date.now() - t0) / 1000); state.videoExt = ''; save();
+    render();
+  };
+  recorder = rec; rec.start();
+  render();
+  recTimer = setInterval(() => { const el = $('#rtime'); if (el) el.textContent = fmtSec((Date.now() - t0) / 1000); }, 500);
+}
+
+/* ---------- 그래픽 + 음성 → 영상 ---------- */
+async function makeVideo(graphic, audio, onProgress) {
+  const mime = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+    .find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+  if (!mime) throw new Error('이 브라우저는 영상 만들기를 지원하지 않습니다. 최신 Chrome 또는 Edge를 사용하세요.');
+  const img = await createImageBitmap(graphic);
+  const s = Math.min(1, 1280 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');   // H.264는 짝수 크기만 가능
+  c.width = Math.max(2, Math.round(img.width * s / 2) * 2); c.height = Math.max(2, Math.round(img.height * s / 2) * 2);
+  const ctx = c.getContext('2d');
+  const draw = () => { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height); };
+  draw();
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    await ac.resume();
+    const buf = await ac.decodeAudioData(await audio.arrayBuffer());
+    const dest = ac.createMediaStreamDestination();
+    const src = ac.createBufferSource(); src.buffer = buf; src.connect(dest);
+    const stream = new MediaStream([...c.captureStream(15).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 1500000, audioBitsPerSecond: 128000 });
+    const chunks = [];
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    const finished = new Promise((res, rej) => { rec.onstop = res; rec.onerror = e => rej(e.error || new Error('녹화 오류')); });
+    const t0 = ac.currentTime;
+    // 캔버스를 계속 다시 그려야 프레임이 기록된다 (setInterval은 탭이 가려져도 멈추지 않음)
+    const iv = setInterval(() => { draw(); onProgress(Math.min(1, (ac.currentTime - t0) / buf.duration)); }, 100);
+    rec.start(1000); src.start();
+    src.onended = () => setTimeout(() => rec.state !== 'inactive' && rec.stop(), 400);
+    await finished; clearInterval(iv);
+    stream.getTracks().forEach(t => t.stop());
+    return { blob: new Blob(chunks, { type: mime.split(';')[0] }), ext: mime.startsWith('video/mp4') ? 'mp4' : 'webm' };
+  } finally { ac.close(); }
+}
+
+async function buildVideo() {
+  if (busy) return;
+  busy = true; $('#vmake').disabled = true; $('#submit').disabled = true;
+  $('#vbox').innerHTML = '<p><b>영상을 만드는 중입니다…</b> 이 탭을 그대로 두세요.</p><progress id="vprog" max="1" value="0"></progress>';
+  let err = '';
+  try {
+    const r = await makeVideo(media.graphic, media.audio, v => { const el = $('#vprog'); if (el) el.value = v; });
+    await setMedia('video', r.blob); state.videoExt = r.ext; save();
+  } catch (e) { err = '영상을 만들지 못했습니다: ' + (e.message || e); }
+  busy = false; render();
+  if (err) $('#msg').textContent = err;
+}
+
+/* ---------- 최종 제출: 제출 ZIP 만들기 ---------- */
+const audioExt = b => /mp4|m4a|aac/.test(b.type) ? 'm4a' : /wav/.test(b.type) ? 'wav' : /ogg/.test(b.type) ? 'ogg' : 'webm';
+async function submit() {
+  const d = doneList(), msg = $('#msg');
+  if (!d.every(Boolean)) { msg.textContent = '아직 완료하지 않은 단계가 있습니다: ' + d.map((x, i) => x ? '' : STEPS[i]).filter(Boolean).join(', '); return; }
+  if (!media.video) { msg.textContent = '먼저 [발표 영상 만들기]를 눌러 최종 발표 영상을 만드세요.'; return; }
+  if (!CHECK6.every((_, i) => state.check6[i])) { msg.textContent = '최종 확인 체크리스트를 모두 확인하고 체크하세요.'; return; }
+  await buildPackage(true);
+  render();
+}
+
+// 학생의 글 기록 (제출 ZIP의 data.json 과 자동 전송에 함께 쓴다)
+function recordData() {
+  return {
+    app: 'infographic-presentation', version: 1,
+    studentId: state.studentId.trim(), name: state.name.trim(), title: state.title.trim(), mainMessage: state.mainMessage.trim(),
+    keyInformation: state.keyInfo.map(k => k.trim()).filter(Boolean), organizer: state.organizer, designPrompt: state.prompt.trim(),
+    hasGraphic: !!media.graphic, hasAudio: !!media.audio, hasVideo: !!media.video,
+    submittedAt: state.submittedAt, savedAt: new Date().toISOString(),
+  };
+}
+
+/* ---------- 글 기록 자동 전송 (SHEET_URL 을 설정했을 때만) ---------- */
+let syncTimer = null;
+function queueSync() {
+  if (!SHEET_URL || !doneList()[0]) return;
+  clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 3000);
+}
+async function syncNow(leaving) {
+  clearTimeout(syncTimer); syncTimer = null;
+  if (!SHEET_URL || !doneList()[0]) return;
+  const el = $('#sync');
+  try {
+    // text/plain 으로 보내야 Apps Script 가 사전 요청(preflight) 없이 받는다
+    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save', data: recordData() }), keepalive: !!leaving });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error);
+    const d = new Date(); el.className = ''; el.textContent = '☁ 기록 전송됨 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 기록 전송 실패 (인터넷 확인)'; }
+}
+window.addEventListener('pagehide', () => { if (syncTimer) syncNow(true); });
+
+// final=true: 최종 제출 파일, false: 지금까지 한 작업만 담은 중간 저장 파일
+async function buildPackage(final) {
+  const base = baseName(state), now = new Date().toISOString();
+  if (final) { state.submittedAt = now; save(); }
+  const data = {
+    ...recordData(),
+    submittedAt: final ? now : '', savedAt: now,
+    graphicFile: media.graphic ? base + '_Infographic.png' : '',
+    audioFile: media.audio ? base + '_Recording.' + audioExt(media.audio) : '',
+    videoFile: media.video ? base + '_Presentation.' + state.videoExt : '',
+  };
+  const files = [{ name: 'data.json', blob: JSON.stringify(data, null, 2) }];
+  if (media.graphic) files.push({ name: data.graphicFile, blob: media.graphic });
+  if (media.audio) files.push({ name: data.audioFile, blob: media.audio });
+  if (media.video) files.push({ name: data.videoFile, blob: media.video });
+  download(await makeZip(files), base + (final ? '_제출.zip' : '_중간저장.zip'));
+}
+
+$('#btnDraft').onclick = async () => {
+  if (busy || recorder) return;
+  if (!doneList()[0]) { alert('먼저 STEP 0에서 학번과 이름을 입력하세요.'); return; }
+  await buildPackage(false);
+  alert('지금까지 한 작업을 "' + baseName(state) + '_중간저장.zip" 파일로 내려받았습니다.\n이 파일은 최종 제출이 아닙니다. 선생님이 요청하면 이 파일을 내세요.');
+};
+
+$('#btnReset').onclick = async () => {
+  if (busy || recorder) return;
+  if (!confirm('입력한 내용, 그래픽, 녹음을 모두 지우고 처음부터 시작할까요?\n(제출 파일을 이미 내려받았다면 그 파일은 지워지지 않습니다.)')) return;
+  state = blank(); save();
+  for (const k of Object.keys(media)) await setMedia(k, null);
+  render();
+};
+
+/* ===================== 교사 화면 ===================== */
+let subs = [], curId = null;
+const MIME = { png: 'image/png', mp4: 'video/mp4', webm: 'video/webm', m4a: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg' };
+const typeOf = (name, kind) => { const e = name.split('.').pop().toLowerCase(); return e === 'webm' ? kind + '/webm' : MIME[e] || 'application/octet-stream'; };
+
+async function loadSubs() {
+  subs = (await idbAll('subs')).sort((a, b) => String(a.data.studentId).localeCompare(String(b.data.studentId), 'ko', { numeric: true }));
+}
+// 한 학생의 기록을 합친다: 글 기록은 더 늦게 저장된 것, 파일(그래픽·녹음·영상)은 더 늦게 만든 ZIP 의 것을 남긴다
+const ts = d => d.savedAt || d.submittedAt || '';
+async function mergeRecord(data, m) {
+  const id = String(data.studentId), old = await idbGet('subs', id);
+  const rec = old || { data: null, graphic: null, audio: null, video: null, mediaAt: '' };
+  const files = rec.data ? { graphicFile: rec.data.graphicFile, audioFile: rec.data.audioFile, videoFile: rec.data.videoFile } : {};
+  if (m && ts(data) >= (rec.mediaAt || '')) {
+    Object.assign(rec, m, { mediaAt: ts(data) });
+    Object.assign(files, { graphicFile: data.graphicFile, audioFile: data.audioFile, videoFile: data.videoFile });
+  }
+  if (!rec.data || ts(data) >= ts(rec.data)) rec.data = data;
+  rec.data = { ...rec.data, ...files };
+  await idbPut('subs', id, rec);
+}
+
+// 자동 수집된 글 기록을 Google 시트에서 불러온다 (교사용 키 필요)
+const SHEET_KEY = 'infographic-sheet-key';
+async function importOnline() {
+  const key = localStorage.getItem(SHEET_KEY) || prompt('Google Apps Script 에 정해 둔 교사용 키(TEACHER_KEY)를 입력하세요.');
+  if (!key) return;
+  $('#tMsg').textContent = '온라인 기록을 불러오는 중…';
+  try {
+    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'list', key }) });
+    const j = await r.json();
+    if (!j.ok) { localStorage.removeItem(SHEET_KEY); $('#tMsg').textContent = j.error === 'key' ? '교사용 키가 맞지 않습니다. 다시 눌러 입력하세요.' : '불러오지 못했습니다: ' + j.error; return; }
+    localStorage.setItem(SHEET_KEY, key);
+    for (const d of j.records) if (d && d.studentId) await mergeRecord(d, null);
+    await loadSubs(); renderTeacher();
+    $('#tMsg').textContent = '';
+  } catch (e) { $('#tMsg').textContent = '온라인 기록을 불러오지 못했습니다. 인터넷 연결과 SHEET_URL 을 확인하세요.'; }
+}
+
+async function importZips(files) {
+  const errs = []; let ok = 0;
+  for (const f of files) {
+    try {
+      const z = await readZip(f);
+      if (!z['data.json']) throw new Error('data.json 없음');
+      const data = JSON.parse(new TextDecoder().decode(z['data.json']));
+      if (data.app !== 'infographic-presentation' || !data.studentId) throw new Error('이 앱의 제출 파일이 아님');
+      const pick = (name, kind) => name && z[name] ? new Blob([z[name]], { type: typeOf(name, kind) }) : null;
+      await mergeRecord(data, { graphic: pick(data.graphicFile, 'image'), audio: pick(data.audioFile, 'audio'), video: pick(data.videoFile, 'video') });
+      ok++;
+    } catch (e) { errs.push(`${f.name}: ${e.message}`); }
+  }
+  await loadSubs(); renderTeacher();
+  $('#tMsg').textContent = errs.length ? `불러오지 못한 파일 ${errs.length}개 — ${errs.join(' / ')}` : '';
+}
+
+function renderTeacher() {
+  $('#tCount').textContent = `불러온 학생 수: ${subs.length}명`;
+  const m = (ok, remote) => ok ? '<td class="y">✓</td>' : remote ? '<td>○</td>' : '<td class="n">-</td>';
+  $('#tBody').innerHTML = subs.length ? subs.map(s => { const d = s.data; return `<tr class="${String(d.studentId) === curId ? 'cur' : ''}">
+    <td>${esc(d.studentId)}</td><td><button class="link" data-id="${esc(d.studentId)}">${esc(d.name)}</button></td>
+    ${m(d.title && d.mainMessage && (d.keyInformation || []).length)}${m(d.organizer)}${m(d.designPrompt)}${m(s.graphic, d.hasGraphic)}${m(s.audio, d.hasAudio)}${m(d.submittedAt)}</tr>`; }).join('')
+    : '<tr><td colspan="8" class="n">아직 불러온 제출 파일이 없습니다.</td></tr>';
+  for (const id of ['#btnXlsx', '#btnZipG', '#btnZipV', '#btnClear']) $(id).disabled = !subs.length;
+  renderDetail();
+}
+
+let detailUrls = [];
+function renderDetail() {
+  detailUrls.forEach(u => URL.revokeObjectURL(u)); detailUrls = [];
+  const s = subs.find(x => String(x.data.studentId) === curId), box = $('#tDetail');
+  box.classList.toggle('hidden', !s);
+  if (!s) return;
+  const d = s.data, u = b => { const x = URL.createObjectURL(b); detailUrls.push(x); return x; };
+  const none = '<dd class="empty">없음</dd>';
+  box.innerHTML = `<h2><small>STUDENT</small>${esc(d.studentId)} ${esc(d.name)}</h2>
+    <dl class="sum">
+      <dt>학번</dt><dd>${esc(d.studentId)}</dd><dt>이름</dt><dd>${esc(d.name)}</dd>
+      <dt>제출 시간</dt><dd>${d.submittedAt ? esc(fmtTime(d.submittedAt)) : "미제출 (중간 저장 " + esc(fmtTime(d.savedAt)) + ")"}</dd>
+      <dt>Title</dt><dd>${esc(d.title)}</dd><dt>Main Message</dt><dd>${esc(d.mainMessage)}</dd>
+      <dt>Key Information</dt><dd><ol>${(d.keyInformation || []).map(k => `<li>${esc(k)}</li>`).join('')}</ol></dd>
+      <dt>Graphic Organizer</dt><dd>${esc(d.organizer)}</dd>
+      <dt>Graphic Design Prompt</dt><dd>${esc(d.designPrompt)}</dd>
+      <dt>Final Graphic</dt>${s.graphic ? `<dd><img src="${u(s.graphic)}" alt="최종 그래픽"><br><button class="small" data-dl="graphic">그래픽 다운로드</button></dd>` : none}
+      <dt>Presentation Recording</dt>${s.audio ? `<dd><audio controls src="${u(s.audio)}"></audio></dd>` : none}
+      <dt>Final Presentation Video</dt>${s.video ? `<dd><video controls src="${u(s.video)}"></video><br><button class="small" data-dl="video">영상 다운로드</button></dd>` : none}
+    </dl>`;
+  box.onclick = e => { const k = e.target.dataset.dl; if (k) download(s[k], k === 'graphic' ? d.graphicFile : d.videoFile); };
+}
+
+$('#tBody').onclick = e => { const b = e.target.closest('[data-id]'); if (!b) return; curId = b.dataset.id; renderTeacher(); $('#tDetail').scrollIntoView({ behavior: 'smooth' }); };
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#btnOnline').classList.toggle('hidden', !SHEET_URL);
+$('#btnOnline').onclick = importOnline;
+$('#fileImport').onchange = e => { importZips([...e.target.files]); e.target.value = ''; };
+const drop = $('#drop');
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); importZips([...e.dataTransfer.files]); };
+
+$('#btnXlsx').onclick = async () => {
+  const rows = [['학번', '이름', 'Title', 'Main Message', 'Key Information', 'Graphic Organizer', 'Graphic Design Prompt', '제출 여부', '제출 시간', '최종 그래픽 파일명', '최종 발표 영상 파일명', '파일 저장 시간']];
+  for (const s of subs) { const d = s.data;
+    rows.push([d.studentId, d.name, d.title, d.mainMessage, (d.keyInformation || []).map((k, i) => `${i + 1}. ${k}`).join('\n'), d.organizer, d.designPrompt,
+      d.submittedAt ? '제출' : '미제출', fmtTime(d.submittedAt), s.graphic ? d.graphicFile : '', s.video ? d.videoFile : '', fmtTime(d.savedAt || d.submittedAt)]); }
+  download(await makeXlsx(rows), 'Infographic_Presentation_Results.xlsx');
+};
+async function zipAll(key, fileKey, outName) {
+  const files = subs.filter(s => s[key]).map(s => ({ name: s.data[fileKey], blob: s[key] }));
+  if (!files.length) { $('#tMsg').textContent = '내려받을 파일이 없습니다.'; return; }
+  download(await makeZip(files), outName);
+}
+$('#btnZipG').onclick = () => zipAll('graphic', 'graphicFile', 'All_Infographics.zip');
+$('#btnZipV').onclick = () => zipAll('video', 'videoFile', 'All_Presentations.zip');
+$('#btnClear').onclick = async () => {
+  if (!confirm('불러온 학생 자료를 이 브라우저에서 모두 지울까요?\n(원래의 제출 ZIP 파일은 지워지지 않습니다.)')) return;
+  await idbClear('subs'); curId = null; await loadSubs(); renderTeacher();
+};
+
+/* ===================== 화면 전환 · 시작 ===================== */
+/* ---------- 교사 화면 비밀번호 (이 브라우저에만 저장, 파일에는 기록되지 않음) ---------- */
+const PW_KEY = 'infographic-teacher-pw';
+let unlocked = false;
+async function hashPw(pw, salt) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(salt + pw));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function renderLock() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(PW_KEY) || 'null'); } catch (e) {}
+  $('#tLock').classList.remove('hidden'); $('#tMain').classList.add('hidden');
+  $('#tLock').innerHTML = '<h2><small>TEACHER</small>교사용 Dashboard</h2>' + (saved
+    ? '<div class="guide"><p>비밀번호를 입력하세요.</p></div>' +
+      '<form id="pwForm"><label class="field" for="pw1">비밀번호</label><input type="password" id="pw1" autocomplete="off">' +
+      '<div class="msg" id="pwMsg"></div>' +
+      '<div class="nav"><button type="button" class="small" id="pwReset">비밀번호 초기화</button><button class="primary">열기</button></div></form>'
+    : '<div class="guide"><p>이 컴퓨터에서 교사 화면을 처음 엽니다. 사용할 비밀번호를 정하세요.</p>' +
+      '<p>비밀번호는 이 브라우저에만 저장됩니다. 잊어버리면 초기화해야 하고, 그때 불러온 학생 자료도 함께 지워집니다(제출 ZIP을 다시 불러오면 됩니다).</p></div>' +
+      '<form id="pwForm"><label class="field" for="pw1">새 비밀번호 (4자 이상)</label><input type="password" id="pw1" autocomplete="off">' +
+      '<label class="field" for="pw2">새 비밀번호 확인</label><input type="password" id="pw2" autocomplete="off">' +
+      '<div class="msg" id="pwMsg"></div>' +
+      '<div class="nav"><span></span><button class="primary">비밀번호 설정</button></div></form>');
+  $('#pw1').focus();
+  $('#pwForm').onsubmit = async e => {
+    e.preventDefault();
+    const pw = $('#pw1').value;
+    if (saved) {
+      if (await hashPw(pw, saved.salt) !== saved.hash) { $('#pwMsg').textContent = '비밀번호가 맞지 않습니다.'; $('#pw1').value = ''; return; }
+    } else {
+      if (pw.length < 4) { $('#pwMsg').textContent = '비밀번호는 4자 이상으로 정하세요.'; return; }
+      if (pw !== $('#pw2').value) { $('#pwMsg').textContent = '두 비밀번호가 서로 다릅니다.'; return; }
+      const salt = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
+      localStorage.setItem(PW_KEY, JSON.stringify({ salt, hash: await hashPw(pw, salt) }));
+    }
+    unlocked = true; showMode();
+  };
+  if ($('#pwReset')) $('#pwReset').onclick = async () => {
+    if (!confirm('비밀번호를 초기화하면 이 브라우저에 불러온 학생 자료가 모두 지워집니다.\n(원래의 제출 ZIP 파일은 지워지지 않습니다.) 계속할까요?')) return;
+    await idbClear('subs'); curId = null; subs = [];
+    localStorage.removeItem(PW_KEY); localStorage.removeItem(SHEET_KEY); renderLock();
+  };
+}
+
+// 교사 화면은 주소 끝에 #teacher 를 붙여서 연다 (학생 화면에는 버튼이 없음)
+function showMode() {
+  const teacher = location.hash === '#teacher';
+  $('#studentView').classList.toggle('hidden', teacher);
+  $('#teacherView').classList.toggle('hidden', !teacher);
+  $('#btnMode').classList.toggle('hidden', !teacher);
+  $('#btnReset').classList.toggle('hidden', teacher);
+  $('#btnDraft').classList.toggle('hidden', teacher);
+  $('#sync').classList.toggle('hidden', teacher);
+  $('#who').classList.toggle('hidden', teacher);
+  if (!teacher) { unlocked = false; subs = []; curId = null; $('#tBody').innerHTML = ''; renderDetail(); return; }
+  if (!unlocked) { renderLock(); return; }
+  $('#tLock').classList.add('hidden'); $('#tMain').classList.remove('hidden');
+  loadSubs().then(renderTeacher);
+}
+$('#btnMode').onclick = () => { location.hash = ''; };
+window.onhashchange = showMode;
+
+(async () => {
+  try { for (const k of Object.keys(media)) media[k] = (await idbGet('blobs', k)) || null; } catch (e) {}
+  render(); showMode();
+})();
+</script>
+</body>
+</html>
