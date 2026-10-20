@@ -111,6 +111,7 @@
   <button id="btnDraft" class="small" title="아직 끝내지 못했어도 지금까지 한 작업을 파일로 내려받아 선생님께 낼 수 있습니다">중간 저장 파일</button>
   <button id="btnReset" class="small">새로 시작</button>
   <button id="btnMode" class="small hidden">학생 화면으로</button>
+  <button id="btnTeacher" class="small" title="교사용 화면">교사</button>
 </header>
 
 <main>
@@ -687,16 +688,16 @@ async function mergeRecord(data, m) {
 }
 
 // 자동 수집된 글 기록을 Google 시트에서 불러온다 (교사용 키 필요)
-const SHEET_KEY = 'infographic-sheet-key';
+async function fetchRecords(key) {
+  const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'list', key }) });
+  return r.json();
+}
 async function importOnline() {
-  const key = localStorage.getItem(SHEET_KEY) || prompt('Google Apps Script 에 정해 둔 교사용 키(TEACHER_KEY)를 입력하세요.');
-  if (!key) return;
+  if (!teacherKey) { showMode(); return; }
   $('#tMsg').textContent = '온라인 기록을 불러오는 중…';
   try {
-    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'list', key }) });
-    const j = await r.json();
-    if (!j.ok) { localStorage.removeItem(SHEET_KEY); $('#tMsg').textContent = j.error === 'key' ? '교사용 키가 맞지 않습니다. 다시 눌러 입력하세요.' : '불러오지 못했습니다: ' + j.error; return; }
-    localStorage.setItem(SHEET_KEY, key);
+    const j = await fetchRecords(teacherKey);
+    if (!j.ok) { $('#tMsg').textContent = '불러오지 못했습니다: ' + j.error; return; }
     for (const d of j.records) if (d && d.studentId) await mergeRecord(d, null);
     await loadSubs(); renderTeacher();
     $('#tMsg').textContent = '';
@@ -784,65 +785,52 @@ $('#btnClear').onclick = async () => {
 };
 
 /* ===================== 화면 전환 · 시작 ===================== */
-/* ---------- 교사 화면 비밀번호 (이 브라우저에만 저장, 파일에는 기록되지 않음) ---------- */
-const PW_KEY = 'infographic-teacher-pw';
-let unlocked = false;
-async function hashPw(pw, salt) {
-  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(salt + pw));
-  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
-}
+/* ---------- 교사 화면 비밀번호 = Apps Script 의 TEACHER_KEY (서버에서 확인, 기기에 저장하지 않음) ---------- */
+let teacherKey = '';   // 맞는 비밀번호를 넣으면 이 창이 열려 있는 동안만 기억한다
+// 예전 버전이 기기에 남긴 비밀번호·키는 지운다
+try { localStorage.removeItem('infographic-teacher-pw'); localStorage.removeItem('infographic-sheet-key'); } catch (e) {}
 function renderLock() {
-  let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(PW_KEY) || 'null'); } catch (e) {}
   $('#tLock').classList.remove('hidden'); $('#tMain').classList.add('hidden');
-  $('#tLock').innerHTML = '<h2><small>TEACHER</small>교사용 Dashboard</h2>' + (saved
-    ? '<div class="guide"><p>비밀번호를 입력하세요.</p></div>' +
-      '<form id="pwForm"><label class="field" for="pw1">비밀번호</label><input type="password" id="pw1" autocomplete="off">' +
-      '<div class="msg" id="pwMsg"></div>' +
-      '<div class="nav"><button type="button" class="small" id="pwReset">비밀번호 초기화</button><button class="primary">열기</button></div></form>'
-    : '<div class="guide"><p>이 컴퓨터에서 교사 화면을 처음 엽니다. 사용할 비밀번호를 정하세요.</p>' +
-      '<p>비밀번호는 이 브라우저에만 저장됩니다. 잊어버리면 초기화해야 하고, 그때 불러온 학생 자료도 함께 지워집니다(제출 ZIP을 다시 불러오면 됩니다).</p></div>' +
-      '<form id="pwForm"><label class="field" for="pw1">새 비밀번호 (4자 이상)</label><input type="password" id="pw1" autocomplete="off">' +
-      '<label class="field" for="pw2">새 비밀번호 확인</label><input type="password" id="pw2" autocomplete="off">' +
-      '<div class="msg" id="pwMsg"></div>' +
-      '<div class="nav"><span></span><button class="primary">비밀번호 설정</button></div></form>');
+  $('#tLock').innerHTML = '<h2><small>TEACHER</small>교사용 Dashboard</h2>' +
+    '<div class="guide"><p>교사용 비밀번호를 입력하세요.</p></div>' +
+    '<form id="pwForm"><label class="field" for="pw1">비밀번호</label><input type="password" id="pw1" autocomplete="off">' +
+    '<div class="msg" id="pwMsg"></div>' +
+    '<div class="nav"><button type="button" class="small" id="pwBack">학생 화면으로</button><button class="primary">열기</button></div></form>';
   $('#pw1').focus();
+  $('#pwBack').onclick = () => { location.hash = ''; };
   $('#pwForm').onsubmit = async e => {
     e.preventDefault();
-    const pw = $('#pw1').value;
-    if (saved) {
-      if (await hashPw(pw, saved.salt) !== saved.hash) { $('#pwMsg').textContent = '비밀번호가 맞지 않습니다.'; $('#pw1').value = ''; return; }
-    } else {
-      if (pw.length < 4) { $('#pwMsg').textContent = '비밀번호는 4자 이상으로 정하세요.'; return; }
-      if (pw !== $('#pw2').value) { $('#pwMsg').textContent = '두 비밀번호가 서로 다릅니다.'; return; }
-      const salt = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
-      localStorage.setItem(PW_KEY, JSON.stringify({ salt, hash: await hashPw(pw, salt) }));
-    }
-    unlocked = true; showMode();
-  };
-  if ($('#pwReset')) $('#pwReset').onclick = async () => {
-    if (!confirm('비밀번호를 초기화하면 이 브라우저에 불러온 학생 자료가 모두 지워집니다.\n(원래의 제출 ZIP 파일은 지워지지 않습니다.) 계속할까요?')) return;
-    await idbClear('subs'); curId = null; subs = [];
-    localStorage.removeItem(PW_KEY); localStorage.removeItem(SHEET_KEY); renderLock();
+    const pw = $('#pw1').value.trim();
+    if (!pw) return;
+    if (!SHEET_URL) { $('#pwMsg').textContent = 'SHEET_URL 이 설정되지 않아 비밀번호를 확인할 수 없습니다.'; return; }
+    $('#pwMsg').textContent = '확인하는 중…';
+    let j;
+    try { j = await fetchRecords(pw); } catch (err) { $('#pwMsg').textContent = '확인하지 못했습니다. 인터넷 연결을 확인하세요.'; return; }
+    if (!j.ok) { $('#pwMsg').textContent = j.error === 'key' ? '비밀번호가 맞지 않습니다.' : '확인하지 못했습니다: ' + j.error; $('#pw1').value = ''; return; }
+    teacherKey = pw;
+    for (const d of j.records) if (d && d.studentId) await mergeRecord(d, null);   // 열면서 온라인 기록도 바로 불러온다
+    showMode();
   };
 }
 
-// 교사 화면은 주소 끝에 #teacher 를 붙여서 연다 (학생 화면에는 버튼이 없음)
+// 교사 화면은 학생 화면 오른쪽 위 [교사] 버튼 → 비밀번호로 연다
 function showMode() {
   const teacher = location.hash === '#teacher';
   $('#studentView').classList.toggle('hidden', teacher);
   $('#teacherView').classList.toggle('hidden', !teacher);
   $('#btnMode').classList.toggle('hidden', !teacher);
+  $('#btnTeacher').classList.toggle('hidden', teacher);
   $('#btnReset').classList.toggle('hidden', teacher);
   $('#btnDraft').classList.toggle('hidden', teacher);
   $('#sync').classList.toggle('hidden', teacher);
   $('#who').classList.toggle('hidden', teacher);
-  if (!teacher) { unlocked = false; subs = []; curId = null; $('#tBody').innerHTML = ''; renderDetail(); return; }
-  if (!unlocked) { renderLock(); return; }
+  if (!teacher) { teacherKey = ''; subs = []; curId = null; $('#tBody').innerHTML = ''; renderDetail(); return; }
+  if (!teacherKey) { renderLock(); return; }
   $('#tLock').classList.add('hidden'); $('#tMain').classList.remove('hidden');
   loadSubs().then(renderTeacher);
 }
 $('#btnMode').onclick = () => { location.hash = ''; };
+$('#btnTeacher').onclick = () => { location.hash = '#teacher'; };
 window.onhashchange = showMode;
 
 (async () => {
