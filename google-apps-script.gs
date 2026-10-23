@@ -23,7 +23,8 @@
 const TEACHER_KEY = '여기에_교사용_키를_정하세요';
 
 const HEAD = ['학번', '이름', 'Title', 'Main Message', 'Key Information', 'Graphic Organizer', 'Graphic Design Prompt',
-  '그래픽 업로드', '발표 녹음', '제출 여부', '제출 시간', '마지막 저장 시간', 'data'];
+  'Presentation Script', '그래픽 업로드', '발표 녹음', '제출 여부', '제출 시간', '마지막 저장 시간', 'data'];
+const SCRIPT_COL = 8;   // 'Presentation Script' 열 (예전 시트에는 없어서 자동으로 끼워 넣는다)
 const HEAD_G = ['학번', '이름', '파일 ID', '업로드 시간', '파일 링크'];
 const FOLDER_NAME = 'Infographic 그래픽';
 
@@ -54,7 +55,7 @@ function doPost(e) {
       if (!id || !name || json.length > 40000) return out_({ ok: false, error: 'data' });
       const row = [id, name, d.title || '', d.mainMessage || '',
         (d.keyInformation || []).map(function (k, i) { return (i + 1) + '. ' + k; }).join('\n'),
-        d.organizer || '', d.designPrompt || '', d.hasGraphic ? 'O' : '', d.hasAudio ? 'O' : '',
+        d.organizer || '', d.designPrompt || '', d.presentationScript || '', d.hasGraphic ? 'O' : '', d.hasAudio ? 'O' : '',
         d.submittedAt ? '제출' : '미제출', time_(d.submittedAt), time_(d.savedAt), json];
       return locked_(function () {
         const sh = sheet_();
@@ -133,6 +134,9 @@ function sheet_() {
     sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold');
     sh.setFrozenRows(1);
     sh.hideColumns(HEAD.length);   // 마지막 'data' 열은 교사 화면이 읽는 원본이라 숨겨 둔다
+  } else if (sh.getRange(1, SCRIPT_COL).getValue() !== HEAD[SCRIPT_COL - 1]) {
+    sh.insertColumnBefore(SCRIPT_COL);   // 예전 시트: 대본 열을 끼워 넣으면 'data' 열은 맨 끝으로 밀린다
+    sh.getRange(1, SCRIPT_COL).setValue(HEAD[SCRIPT_COL - 1]).setFontWeight('bold');
   }
   return sh;
 }
