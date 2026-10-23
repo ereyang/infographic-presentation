@@ -90,8 +90,6 @@
   h3 { margin: 22px 0 6px; font-size: 17px; }
 
   .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
-  #drop { border: 2px dashed var(--line); border-radius: 14px; padding: 18px; text-align: center; color: var(--sub); margin: 12px 0; }
-  #drop.over { border-color: var(--main); background: var(--main-soft); }
   .tablewrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
@@ -136,11 +134,22 @@
   .gal .ph img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .gal figcaption { padding: 6px 10px; font-size: 14px; }
   .gal figcaption small { display: block; color: var(--sub); font-size: 12px; }
-  #lightbox { position: fixed; inset: 0; background: rgba(15, 18, 35, .92); z-index: 50; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; padding: 16px; color: #fff; }
-  #lightbox img { max-width: 100%; max-height: calc(100vh - 110px); border-radius: 8px; background: #fff; }
-  #lightbox .lbbar { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
-  #lightbox .lbbar b { min-width: 140px; text-align: center; }
+  /* 크게 보기: 그래픽이 화면을 꽉 채우도록 (작은 이미지도 확대) */
+  #lightbox { position: fixed; inset: 0; background: #14161f; z-index: 50; display: flex; flex-direction: column; color: #fff; }
+  #lbStage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px 10px 0; }
+  #lbImg { width: 100%; height: 100%; object-fit: contain; display: block; }
+  #lbWait { color: #aab0c8; font-size: 18px; }
+  #lightbox .lbbar { flex: none; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 16px 10px; position: relative; }
+  #lightbox .lbwho { min-width: 200px; text-align: center; line-height: 1.3; }
+  #lightbox .lbwho b { display: block; font-size: 22px; }
+  #lightbox .lbwho span { font-size: 13px; color: #aab0c8; }
+  #lightbox .lbnav { width: 52px; height: 44px; font-size: 30px; line-height: 1; padding: 0; background: rgba(255,255,255,.1);
+    border-color: rgba(255,255,255,.2); color: #fff; }
+  #lightbox .lbnav:hover { background: rgba(255,255,255,.2); color: #fff; }
+  #lightbox .lbright { position: absolute; right: 16px; display: flex; gap: 6px; }
+  #lightbox .lbright button { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff; }
+  @media (max-width: 760px) { #lightbox .lbright { position: static; } #lightbox .lbbar { flex-wrap: wrap; } }
+  .zoom { cursor: zoom-in; } .zoom img { max-width: 100%; max-height: 420px; }
   .hidden { display: none !important; }
   @media (max-width: 600px) { dl.sum { grid-template-columns: 1fr; gap: 2px; } dl.sum dd { margin-bottom: 10px; } .card { padding: 18px; } }
 </style>
@@ -150,7 +159,6 @@
   <h1><span>Infographic</span> Presentation</h1>
   <span id="who"></span>
   <span id="sync"></span>
-  <button id="btnDraft" class="small" title="아직 끝내지 못했어도 지금까지 한 작업을 파일로 내려받아 선생님께 낼 수 있습니다">중간 저장 파일</button>
   <button id="btnReset" class="small">새로 시작</button>
   <button id="btnMode" class="small hidden">학생 화면으로</button>
   <button id="btnTeacher" class="small" title="교사용 화면">교사</button>
@@ -168,25 +176,17 @@
     <div class="card">
       <h2><small>TEACHER</small>교사용 Dashboard</h2>
       <div class="guide">
-        <p><b>[온라인 기록 불러오기]</b>(자동 수집을 설정한 경우에만 보임)를 누르면 학생이 파일을 내지 않아도 지금까지 입력한 글 기록이 모두 표에 나타납니다. 그래픽은 아래 [반별 그래픽 열람]에서 보거나 제출 파일로 받습니다.</p>
-        <p>학생들이 낸 <b>제출 파일(학번_이름_제출.zip)</b>을 한꺼번에 불러오세요. 아직 끝내지 못한 학생은 학생 화면의 [중간 저장 파일] 버튼으로 만든 <b>학번_이름_중간저장.zip</b>을 내면, 그때까지 한 작업이 표와 Excel에 나타납니다. 여러 파일을 한 번에 선택하거나 아래 칸에 끌어다 놓을 수 있습니다.</p>
-        <p>불러온 자료는 이 브라우저에 보관되어 다시 열어도 유지됩니다. 같은 학번을 다시 불러오면 더 늦게 제출한 파일로 바뀝니다.</p>
-      </div>
-      <div id="drop">
-        <button class="primary" id="btnImport">제출 파일 불러오기</button>
-        <input type="file" id="fileImport" accept=".zip" multiple class="hidden">
-        <div>또는 ZIP 파일들을 여기에 끌어다 놓기</div>
+        <p>학생이 입력한 내용과 그래픽은 자동으로 이곳에 모입니다. 학생이 [최종 제출]을 누르면 '제출' 칸에 ✓가 표시됩니다. 최신 상태를 보려면 [새로 고침]을 누르세요.</p>
+        <p>그래픽은 아래 <b>[반별 그래픽 열람]</b>에서 반별로 크게 띄워 볼 수 있습니다.</p>
       </div>
       <div class="tools">
         <b id="tCount"></b>
         <span style="flex:1"></span>
-        <button id="btnOnline" class="primary hidden">온라인 기록 불러오기</button>
-        <button id="btnXlsx">전체 학생 결과 Excel 다운로드</button>
-        <button id="btnZipG">전체 그래픽 ZIP 다운로드</button>
-        <button id="btnClear" class="small">전체 비우기</button>
+        <button id="btnOnline" class="small">새로 고침</button>
+        <button id="btnXlsx" class="primary">전체 학생 결과 Excel 다운로드</button>
       </div>
       <div class="msg" id="tMsg"></div>
-      <p class="hint">✓ 교사가 받은 자료 · ○ 학생 기기에서는 완료했지만 파일은 아직 받지 않음 · - 아직 안 함</p>
+      <p class="hint">✓ 완료 · - 아직 안 함. 학생 이름을 누르면 자세히 볼 수 있습니다.</p>
       <div class="tablewrap">
         <table>
           <thead><tr><th>학번</th><th>이름</th><th>내용</th><th>Organizer</th><th>Prompt</th><th>Graphic</th><th>Script</th><th>제출</th></tr></thead>
@@ -197,8 +197,8 @@
     <div class="card hidden" id="tDetail" style="margin-top:16px"></div>
     <div class="card" id="gCard" style="margin-top:16px">
       <h2><small>GALLERY</small>반별 그래픽 열람</h2>
-      <p class="hint">학생이 STEP 4에서 그래픽을 올리면 여기로 자동으로 모입니다. 반을 고르고, 그림을 누르면 크게 볼 수 있습니다.</p>
-      <div class="tools"><b id="galInfo"></b><span style="flex:1"></span><button id="btnGal" class="small">새로 고침</button></div>
+      <p class="hint">학생이 STEP 4에서 그래픽을 올리면 여기로 자동으로 모입니다. 반을 고르고 <b>[▶ 이 반 발표 화면]</b>을 누르면 전체 화면으로 한 장씩 크게 띄웁니다. 그림을 눌러도 크게 볼 수 있습니다. 넘기기: ← → 키 또는 ‹ › 버튼.</p>
+      <div class="tools"><b id="galInfo"></b><span style="flex:1"></span><button id="btnGal" class="small">새로 고침</button><button id="btnShow" class="primary">▶ 이 반 발표 화면</button></div>
       <div class="tabs" id="galTabs"></div>
       <div class="gal" id="galGrid"></div>
     </div>
@@ -206,15 +206,19 @@
   </section>
 </main>
 <div id="lightbox" class="hidden">
-  <img id="lbImg" alt="">
-  <div class="lbbar"><button id="lbPrev">← 이전</button><b id="lbName"></b><button id="lbNext">다음 →</button>
-    <button id="lbDl" class="small">다운로드</button><button id="lbClose" class="small">닫기 ✕</button></div>
+  <div id="lbStage"><img id="lbImg" alt=""><div id="lbWait" class="hidden">그래픽을 불러오는 중…</div></div>
+  <div class="lbbar">
+    <button id="lbPrev" class="lbnav" title="이전 (←)">‹</button>
+    <div class="lbwho"><b id="lbName"></b><span id="lbPos"></span></div>
+    <button id="lbNext" class="lbnav" title="다음 (→)">›</button>
+    <span class="lbright"><button id="lbFull" class="small">⛶ 전체 화면</button><button id="lbClose" class="small">닫기 ✕</button></span>
+  </div>
 </div>
 
 <script>
 /* ===================== 설정 ===================== */
 // 학생의 글 기록을 자동으로 모을 Google Apps Script 웹 앱 주소 (google-apps-script.gs 의 설치 방법 참고).
-// 비워 두면 자동 수집 없이 제출 ZIP 방식으로만 동작한다.
+// 학생의 기록·그래픽은 모두 여기로 제출된다.
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwFIqur87CkpdqZYsoCm-Lvhh7SV5GqNsPRX438GZiyGS1S3L3jZDRJgssISGitEHIQ/exec';
 
 /* ===================== 공통 도구 ===================== */
@@ -252,8 +256,6 @@ async function idb(store, mode, fn) {
 const idbGet = (s, k) => idb(s, 'readonly', o => o.get(k));
 const idbPut = (s, k, v) => idb(s, 'readwrite', o => o.put(v, k));
 const idbDel = (s, k) => idb(s, 'readwrite', o => o.delete(k));
-const idbAll = s => idb(s, 'readonly', o => o.getAll());
-const idbClear = s => idb(s, 'readwrite', o => o.clear());
 
 /* ---------- ZIP 만들기/읽기 (압축 없이 저장) ---------- */
 const CRC_T = (() => { const t = new Uint32Array(256);
@@ -289,33 +291,6 @@ async function makeZip(files) {
   end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
   end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
   return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
-}
-
-// 반환: { 파일명: Uint8Array }
-async function readZip(blob) {
-  const buf = new Uint8Array(await blob.arrayBuffer());
-  const dv = new DataView(buf.buffer), dec = new TextDecoder();
-  let e = buf.length - 22;
-  while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
-  if (e < 0) throw new Error('ZIP 파일이 아닙니다');
-  const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
-  const out = {};
-  for (let i = 0; i < n; i++) {
-    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('ZIP 구조 오류');
-    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
-    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true);
-    const lho = dv.getUint32(p + 42, true);
-    const name = dec.decode(buf.subarray(p + 46, p + 46 + nlen));
-    const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
-    let data = buf.subarray(start, start + csize);
-    if (method === 8) {
-      const st = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-      data = new Uint8Array(await new Response(st).arrayBuffer());
-    } else if (method !== 0) throw new Error('지원하지 않는 압축 방식');
-    if (!name.endsWith('/')) out[name.split('/').pop()] = data;
-    p += 46 + nlen + xlen + clen;
-  }
-  return out;
 }
 
 /* ---------- Excel(.xlsx) 만들기 ---------- */
@@ -504,7 +479,7 @@ const VIEWS = [
     const keys = state.keyInfo.filter(k => k.trim());
     return head(6, '최종 제출') +
     `<div class="guide"><p>지금까지 작업한 내용을 확인하세요. 고칠 곳이 있으면 위의 단계를 눌러 수정할 수 있습니다.</p>
-     <p><b>① 체크리스트 확인 → ② 최종 제출</b> 순서로 진행합니다. [최종 제출]을 누르면 제출 파일(ZIP)이 내려받아지고, <b>그 파일을 선생님께 내야 제출이 끝납니다.</b></p></div>
+     <p><b>① 체크리스트 확인 → ② 최종 제출</b> 순서로 진행합니다. [최종 제출]을 누르면 그래픽과 작성한 내용이 <b>선생님께 바로 전송</b>됩니다. 따로 파일을 낼 필요가 없습니다.</p></div>
      <dl class="sum">
        <dt>학번</dt>${v(state.studentId.trim(), esc(state.studentId))}
        <dt>이름</dt>${v(state.name.trim(), esc(state.name))}
@@ -521,7 +496,7 @@ const VIEWS = [
      <h3>② 제출</h3>
      <button class="primary" id="submit">최종 제출</button>
      ${!all ? `<p class="msg">아직 완료하지 않은 단계가 있습니다: ${d.map((x, i) => x ? '' : STEPS[i]).filter(Boolean).join(', ')}</p>` : ''}
-     ${state.submittedAt ? `<p class="okmsg">${fmtTime(state.submittedAt)}에 제출 파일을 만들었습니다. 내려받은 <b>${esc(baseName(state))}_제출.zip</b> 파일을 선생님께 제출하세요. 내용을 고쳤다면 다시 [최종 제출]을 눌러 새 파일을 내세요.</p>` : ''}`;
+     ${state.submittedAt ? `<p class="okmsg">✓ ${fmtTime(state.submittedAt)}에 선생님께 제출되었습니다. 내용을 고쳤다면 [최종 제출]을 다시 누르세요.</p>` : ''}`;
   },
 ];
 
@@ -590,16 +565,25 @@ async function toPng(file) {
   return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/png'));
 }
 
-/* ---------- 최종 제출: 제출 ZIP 만들기 ---------- */
+/* ---------- 최종 제출: 그래픽과 기록을 선생님께 바로 보낸다 ---------- */
 async function submit() {
   const d = doneList(), msg = $('#msg');
   if (!d.every(Boolean)) { msg.textContent = '아직 완료하지 않은 단계가 있습니다: ' + d.map((x, i) => x ? '' : STEPS[i]).filter(Boolean).join(', '); return; }
   if (!CHECK6.every((_, i) => state.check6[i])) { msg.textContent = '최종 확인 체크리스트를 모두 확인하고 체크하세요.'; return; }
-  await buildPackage(true);
+  if (busy) return;
+  busy = true; $('#submit').disabled = true; $('#submit').textContent = '제출하는 중…';
+  const prev = state.submittedAt;
+  clearTimeout(syncTimer); syncTimer = null;
+  state.submittedAt = new Date().toISOString();
+  const ok = await sendGraphic() && await syncNow();   // 그래픽을 먼저 보내고, 제출 표시가 된 기록을 보낸다
+  busy = false;
+  if (!ok) state.submittedAt = prev;
+  localStorage.setItem(LS_KEY, JSON.stringify(state));
   render();
+  if (!ok) $('#msg').textContent = '제출하지 못했습니다. 인터넷 연결을 확인하고 [최종 제출]을 다시 누르세요.';
 }
 
-// 학생의 글 기록 (제출 ZIP의 data.json 과 자동 전송에 함께 쓴다)
+// 학생의 글 기록 (자동 전송과 제출에 쓴다)
 function recordData() {
   return {
     app: 'infographic-presentation', version: 1,
@@ -620,7 +604,7 @@ function queueSync() {
 }
 async function syncNow(leaving) {
   clearTimeout(syncTimer); syncTimer = null;
-  if (!SHEET_URL || !doneList()[0]) return;
+  if (!SHEET_URL || !doneList()[0]) return false;
   const el = $('#sync');
   try {
     // text/plain 으로 보내야 Apps Script 가 사전 요청(preflight) 없이 받는다
@@ -629,31 +613,34 @@ async function syncNow(leaving) {
     const j = await r.json();
     if (!j.ok) throw new Error(j.error);
     const d = new Date(); el.className = ''; el.textContent = '☁ 기록 전송됨 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 기록 전송 실패 (인터넷 확인)'; return; }
+  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 기록 전송 실패 (인터넷 확인)'; return false; }
   if (!leaving) sendGraphic();
+  return true;
 }
 window.addEventListener('pagehide', () => { if (syncTimer) syncNow(true); });
 
-// 그래픽 이미지를 선생님 화면용으로 전송 (학번·이름이 바뀌면 다시 보낸다)
-let sendingGraphic = false;
-async function sendGraphic() {
-  const who = baseName(state);
-  if (sendingGraphic || !media.graphic || state.graphicSentFor === who) return;
-  sendingGraphic = true;
+// 그래픽 이미지를 선생님께 전송 (학번·이름이 바뀌면 다시 보낸다). 보낼 것이 없거나 보냈으면 true
+let graphicP = null;
+function sendGraphic() {
+  if (!graphicP) graphicP = sendGraphicOnce().finally(() => { graphicP = null; });
+  return graphicP;
+}
+async function sendGraphicOnce() {
   const el = $('#sync');
-  try {
-    el.className = ''; el.textContent = '☁ 그래픽 전송 중…';
-    const blob = media.graphic, data = await toJpegBase64(blob);
-    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'image', studentId: state.studentId.trim(), name: state.name.trim(), mime: 'image/jpeg', data }) });
-    const j = await r.json();
-    if (!j.ok && j.error === 'action') { el.textContent = '☁ 기록 전송됨'; sendingGraphic = false; return; }   // 서버가 아직 그래픽 받기 전 버전
-    if (!j.ok) throw new Error(j.error);
-    if (media.graphic === blob) { state.graphicSentFor = who; localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-    const d = new Date(); el.textContent = '☁ 그래픽 전송됨 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 그래픽 전송 실패 (다시 시도합니다)'; }
-  sendingGraphic = false;
-  if (media.graphic && state.graphicSentFor !== baseName(state) && el.className !== 'fail') sendGraphic();   // 전송 중에 이미지가 바뀐 경우
+  for (;;) {   // 전송 중에 이미지가 바뀌면 한 번 더 보낸다
+    const who = baseName(state), blob = media.graphic;
+    if (!SHEET_URL || !blob || state.graphicSentFor === who) return true;
+    try {
+      el.className = ''; el.textContent = '☁ 그래픽 전송 중…';
+      const data = await toJpegBase64(blob);
+      const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'image', studentId: state.studentId.trim(), name: state.name.trim(), mime: 'image/jpeg', data }) });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error);
+      if (media.graphic === blob && baseName(state) === who) { state.graphicSentFor = who; localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+      const d = new Date(); el.textContent = '☁ 그래픽 전송됨 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    } catch (e) { el.className = 'fail'; el.textContent = '⚠ 그래픽 전송 실패 (인터넷 확인)'; return false; }
+  }
 }
 // 긴 변 2000px JPEG 로 줄여 보낸다 (투명 부분은 흰색)
 async function toJpegBase64(blob) {
@@ -668,153 +655,78 @@ async function toJpegBase64(blob) {
   return url.slice(url.indexOf(',') + 1);
 }
 
-// final=true: 최종 제출 파일, false: 지금까지 한 작업만 담은 중간 저장 파일
-async function buildPackage(final) {
-  const base = baseName(state), now = new Date().toISOString();
-  if (final) { state.submittedAt = now; save(); }
-  const data = {
-    ...recordData(),
-    submittedAt: final ? now : '', savedAt: now,
-    graphicFile: media.graphic ? base + '_Infographic.png' : '',
-    audioFile: '', videoFile: '',
-  };
-  const files = [{ name: 'data.json', blob: JSON.stringify(data, null, 2) }];
-  if (media.graphic) files.push({ name: data.graphicFile, blob: media.graphic });
-  if (data.presentationScript) files.push({ name: base + '_Script.txt', blob: data.presentationScript });
-  download(await makeZip(files), base + (final ? '_제출.zip' : '_중간저장.zip'));
-}
-
-$('#btnDraft').onclick = async () => {
-  if (busy) return;
-  if (!doneList()[0]) { alert('먼저 STEP 0에서 학번과 이름을 입력하세요.'); return; }
-  await buildPackage(false);
-  alert('지금까지 한 작업을 "' + baseName(state) + '_중간저장.zip" 파일로 내려받았습니다.\n이 파일은 최종 제출이 아닙니다. 선생님이 요청하면 이 파일을 내세요.');
-};
-
 $('#btnReset').onclick = async () => {
   if (busy) return;
-  if (!confirm('입력한 내용과 그래픽을 모두 지우고 처음부터 시작할까요?\n(제출 파일을 이미 내려받았다면 그 파일은 지워지지 않습니다.)')) return;
+  if (!confirm('이 기기에 입력한 내용과 그래픽을 모두 지우고 처음부터 시작할까요?\n(이미 선생님께 보낸 기록은 지워지지 않습니다.)')) return;
   state = blank(); save();
   for (const k of Object.keys(media)) await setMedia(k, null);
   render();
 };
 
 /* ===================== 교사 화면 ===================== */
-let subs = [], curId = null;
-const MIME = { png: 'image/png', mp4: 'video/mp4', webm: 'video/webm', m4a: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg' };
-const typeOf = (name, kind) => { const e = name.split('.').pop().toLowerCase(); return e === 'webm' ? kind + '/webm' : MIME[e] || 'application/octet-stream'; };
+let subs = [], curId = null;   // 서버에서 받은 학생 기록 (이 창이 열려 있는 동안만 기억)
 
-async function loadSubs() {
-  subs = (await idbAll('subs')).sort((a, b) => String(a.data.studentId).localeCompare(String(b.data.studentId), 'ko', { numeric: true }));
-}
-// 한 학생의 기록을 합친다: 글 기록은 더 늦게 저장된 것, 파일(그래픽·녹음·영상)은 더 늦게 만든 ZIP 의 것을 남긴다
-const ts = d => d.savedAt || d.submittedAt || '';
-async function mergeRecord(data, m) {
-  const id = String(data.studentId), old = await idbGet('subs', id);
-  const rec = old || { data: null, graphic: null, audio: null, video: null, mediaAt: '' };
-  const files = rec.data ? { graphicFile: rec.data.graphicFile, audioFile: rec.data.audioFile, videoFile: rec.data.videoFile } : {};
-  if (m && ts(data) >= (rec.mediaAt || '')) {
-    Object.assign(rec, m, { mediaAt: ts(data) });
-    Object.assign(files, { graphicFile: data.graphicFile, audioFile: data.audioFile, videoFile: data.videoFile });
-  }
-  if (!rec.data || ts(data) >= ts(rec.data)) rec.data = data;
-  rec.data = { ...rec.data, ...files };
-  await idbPut('subs', id, rec);
-}
-
-// 자동 수집된 글 기록을 Google 시트에서 불러온다 (교사용 키 필요)
 async function fetchRecords(key) {
   const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'list', key }) });
   return r.json();
 }
-async function importOnline() {
-  if (!teacherKey) { showMode(); return; }
-  $('#tMsg').textContent = '온라인 기록을 불러오는 중…';
+const setRecords = list => { subs = list.filter(d => d && d.studentId).sort(byId); };
+async function loadRecords() {
+  $('#tMsg').textContent = '';
+  $('#tCount').textContent = '학생 기록을 불러오는 중…';
   try {
     const j = await fetchRecords(teacherKey);
-    if (!j.ok) { $('#tMsg').textContent = '불러오지 못했습니다: ' + j.error; return; }
-    for (const d of j.records) if (d && d.studentId) await mergeRecord(d, null);
-    await loadSubs(); renderTeacher();
-    $('#tMsg').textContent = '';
-  } catch (e) { $('#tMsg').textContent = '온라인 기록을 불러오지 못했습니다. 인터넷 연결과 SHEET_URL 을 확인하세요.'; }
+    if (!j.ok) throw new Error(j.error);
+    setRecords(j.records);
+  } catch (e) { $('#tMsg').textContent = '학생 기록을 불러오지 못했습니다. 인터넷 연결을 확인하고 [새로 고침]을 누르세요.'; }
+  renderTeacher();
 }
-
-async function importZips(files) {
-  const errs = []; let ok = 0;
-  for (const f of files) {
-    try {
-      const z = await readZip(f);
-      if (!z['data.json']) throw new Error('data.json 없음');
-      const data = JSON.parse(new TextDecoder().decode(z['data.json']));
-      if (data.app !== 'infographic-presentation' || !data.studentId) throw new Error('이 앱의 제출 파일이 아님');
-      const pick = (name, kind) => name && z[name] ? new Blob([z[name]], { type: typeOf(name, kind) }) : null;
-      await mergeRecord(data, { graphic: pick(data.graphicFile, 'image'), audio: pick(data.audioFile, 'audio'), video: pick(data.videoFile, 'video') });
-      ok++;
-    } catch (e) { errs.push(`${f.name}: ${e.message}`); }
-  }
-  await loadSubs(); renderTeacher();
-  $('#tMsg').textContent = errs.length ? `불러오지 못한 파일 ${errs.length}개 — ${errs.join(' / ')}` : '';
-}
+const galOf = id => gal.find(g => g.studentId === String(id).trim());
 
 function renderTeacher() {
-  $('#tCount').textContent = `불러온 학생 수: ${subs.length}명`;
-  const m = (ok, remote) => ok ? '<td class="y">✓</td>' : remote ? '<td>○</td>' : '<td class="n">-</td>';
-  $('#tBody').innerHTML = subs.length ? subs.map(s => { const d = s.data; return `<tr class="${String(d.studentId) === curId ? 'cur' : ''}">
+  $('#tCount').textContent = `학생 ${subs.length}명 · 제출 ${subs.filter(d => d.submittedAt).length}명`;
+  const m = ok => ok ? '<td class="y">✓</td>' : '<td class="n">-</td>';
+  $('#tBody').innerHTML = subs.length ? subs.map(d => `<tr class="${String(d.studentId) === curId ? 'cur' : ''}">
     <td>${esc(d.studentId)}</td><td><button class="link" data-id="${esc(d.studentId)}">${esc(d.name)}</button></td>
-    ${m(d.title && d.mainMessage && (d.keyInformation || []).length)}${m(d.organizer)}${m(d.designPrompt)}${m(s.graphic, d.hasGraphic)}${m(d.presentationScript)}${m(d.submittedAt)}</tr>`; }).join('')
-    : '<tr><td colspan="8" class="n">아직 불러온 제출 파일이 없습니다.</td></tr>';
-  for (const id of ['#btnXlsx', '#btnZipG', '#btnClear']) $(id).disabled = !subs.length;
+    ${m(d.title && d.mainMessage && (d.keyInformation || []).length)}${m(d.organizer)}${m(d.designPrompt)}${m(galOf(d.studentId) || d.hasGraphic)}${m(d.presentationScript)}${m(d.submittedAt)}</tr>`).join('')
+    : '<tr><td colspan="8" class="n">아직 기록한 학생이 없습니다.</td></tr>';
+  $('#btnXlsx').disabled = !subs.length;
   renderDetail();
 }
 
-let detailUrls = [];
 function renderDetail() {
-  detailUrls.forEach(u => URL.revokeObjectURL(u)); detailUrls = [];
-  const s = subs.find(x => String(x.data.studentId) === curId), box = $('#tDetail');
-  box.classList.toggle('hidden', !s);
-  if (!s) return;
-  const d = s.data, u = b => { const x = URL.createObjectURL(b); detailUrls.push(x); return x; };
-  const none = '<dd class="empty">없음</dd>';
+  const d = subs.find(x => String(x.studentId) === curId), box = $('#tDetail');
+  box.classList.toggle('hidden', !d);
+  if (!d) return;
+  const g = galOf(d.studentId), none = '<dd class="empty">없음</dd>';
   box.innerHTML = `<h2><small>STUDENT</small>${esc(d.studentId)} ${esc(d.name)}</h2>
     <dl class="sum">
       <dt>학번</dt><dd>${esc(d.studentId)}</dd><dt>이름</dt><dd>${esc(d.name)}</dd>
-      <dt>제출 시간</dt><dd>${d.submittedAt ? esc(fmtTime(d.submittedAt)) : "미제출 (중간 저장 " + esc(fmtTime(d.savedAt)) + ")"}</dd>
+      <dt>제출 시간</dt><dd>${d.submittedAt ? esc(fmtTime(d.submittedAt)) : '미제출 (마지막 저장 ' + esc(fmtTime(d.savedAt)) + ')'}</dd>
       <dt>Title</dt><dd>${esc(d.title)}</dd><dt>Main Message</dt><dd>${esc(d.mainMessage)}</dd>
       <dt>Key Information</dt><dd><ol>${(d.keyInformation || []).map(k => `<li>${esc(k)}</li>`).join('')}</ol></dd>
       <dt>Graphic Organizer</dt><dd>${esc(d.organizer)}</dd>
       <dt>Graphic Design Prompt</dt><dd>${esc(d.designPrompt)}</dd>
-      <dt>Final Graphic</dt>${s.graphic ? `<dd><img src="${u(s.graphic)}" alt="최종 그래픽"><br><button class="small" data-dl="graphic">그래픽 다운로드</button></dd>` : none}
+      <dt>Final Graphic</dt>${g ? `<dd><div class="zoom" data-f="${esc(g.fileId)}">${galUrls[g.fileId] ? `<img src="${galUrls[g.fileId]}" alt="최종 그래픽">` : '불러오는 중…'}</div>
+        <button class="small" id="dBig">크게 보기</button></dd>` : none}
       <dt>Presentation Script</dt>${d.presentationScript ? `<dd>${esc(d.presentationScript)}</dd>` : none}
     </dl>`;
-  box.onclick = e => { if (e.target.dataset.dl) download(s.graphic, d.graphicFile); };
+  if (g) {
+    if (!galUrls[g.fileId]) fetchImages([g]);
+    box.querySelector('.zoom').onclick = $('#dBig').onclick = () => showLb(0, [g]);
+  }
 }
 
 $('#tBody').onclick = e => { const b = e.target.closest('[data-id]'); if (!b) return; curId = b.dataset.id; renderTeacher(); $('#tDetail').scrollIntoView({ behavior: 'smooth' }); };
-$('#btnImport').onclick = () => $('#fileImport').click();
-$('#btnOnline').classList.toggle('hidden', !SHEET_URL);
-$('#btnOnline').onclick = importOnline;
-$('#fileImport').onchange = e => { importZips([...e.target.files]); e.target.value = ''; };
-const drop = $('#drop');
-drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
-drop.ondragleave = () => drop.classList.remove('over');
-drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); importZips([...e.dataTransfer.files]); };
+$('#btnOnline').onclick = () => { loadRecords(); loadGallery(); };
 
 $('#btnXlsx').onclick = async () => {
-  const rows = [['학번', '이름', 'Title', 'Main Message', 'Key Information', 'Graphic Organizer', 'Graphic Design Prompt', 'Presentation Script', '제출 여부', '제출 시간', '최종 그래픽 파일명', '파일 저장 시간']];
-  for (const s of subs) { const d = s.data;
+  const rows = [['학번', '이름', 'Title', 'Main Message', 'Key Information', 'Graphic Organizer', 'Graphic Design Prompt', 'Presentation Script', '제출 여부', '제출 시간', '그래픽 업로드', '마지막 저장 시간']];
+  for (const d of subs) {
     rows.push([d.studentId, d.name, d.title, d.mainMessage, (d.keyInformation || []).map((k, i) => `${i + 1}. ${k}`).join('\n'), d.organizer, d.designPrompt,
-      d.presentationScript || '', d.submittedAt ? '제출' : '미제출', fmtTime(d.submittedAt), s.graphic ? d.graphicFile : '', fmtTime(d.savedAt || d.submittedAt)]); }
+      d.presentationScript || '', d.submittedAt ? '제출' : '미제출', fmtTime(d.submittedAt), galOf(d.studentId) || d.hasGraphic ? 'O' : '', fmtTime(d.savedAt || d.submittedAt)]);
+  }
   download(await makeXlsx(rows), 'Infographic_Presentation_Results.xlsx');
-};
-async function zipAll(key, fileKey, outName) {
-  const files = subs.filter(s => s[key]).map(s => ({ name: s.data[fileKey], blob: s[key] }));
-  if (!files.length) { $('#tMsg').textContent = '내려받을 파일이 없습니다.'; return; }
-  download(await makeZip(files), outName);
-}
-$('#btnZipG').onclick = () => zipAll('graphic', 'graphicFile', 'All_Infographics.zip');
-$('#btnClear').onclick = async () => {
-  if (!confirm('불러온 학생 자료를 이 브라우저에서 모두 지울까요?\n(원래의 제출 ZIP 파일은 지워지지 않습니다.)')) return;
-  await idbClear('subs'); curId = null; await loadSubs(); renderTeacher();
 };
 
 /* ---------- 반별 그래픽 열람 (온라인으로 받은 그래픽) ---------- */
@@ -837,7 +749,7 @@ async function loadGallery() {
   } catch (e) { $('#galInfo').textContent = '그래픽 목록을 불러오지 못했습니다: ' + (e.message || e); return; }
   const classes = [...new Set(gal.map(g => classOf(g.studentId)))];
   if (!classes.includes(galClass)) galClass = classes[0] || '';
-  renderGallery();
+  renderGallery(); renderTeacher();   // 표의 Graphic 칸도 갤러리 목록을 본다
 }
 
 function renderGallery() {
@@ -846,6 +758,7 @@ function renderGallery() {
   $('#galTabs').innerHTML = classes.map(c =>
     `<button class="small ${c === galClass ? 'sel' : ''}" data-c="${esc(c)}">${esc(c)} (${gal.filter(g => classOf(g.studentId) === c).length})</button>`).join('');
   galShown = gal.filter(g => classOf(g.studentId) === galClass);
+  $('#btnShow').disabled = !galShown.length;
   $('#galGrid').innerHTML = galShown.length ? galShown.map((g, i) => `<figure data-i="${i}">
       <div class="ph" data-f="${esc(g.fileId)}">${galUrls[g.fileId] ? `<img src="${galUrls[g.fileId]}" alt="">` : '불러오는 중…'}</div>
       <figcaption><b>${esc(g.studentId)} ${esc(g.name)}</b><small>${esc(g.at)}</small></figcaption></figure>`).join('')
@@ -858,7 +771,7 @@ async function fetchImages(list) {
   const q = list.slice();
   const one = async () => {
     for (let g; (g = q.shift());) {
-      const box = () => document.querySelector(`.ph[data-f="${CSS.escape(g.fileId)}"]`);
+      const boxes = () => document.querySelectorAll(`[data-f="${CSS.escape(g.fileId)}"]`);   // 갤러리 칸 + 학생 상세
       try {
         const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'img', key: teacherKey, fileId: g.fileId }) });
@@ -866,35 +779,55 @@ async function fetchImages(list) {
         if (!j.ok) throw new Error(j.error);
         const bin = Uint8Array.from(atob(j.data), c => c.charCodeAt(0));
         galUrls[g.fileId] = URL.createObjectURL(new Blob([bin], { type: j.mime }));
-        if (box()) box().innerHTML = `<img src="${galUrls[g.fileId]}" alt="">`;
-        if (lbAt >= 0 && galShown[lbAt] === g) showLb(lbAt);
-      } catch (e) { if (box()) box().textContent = '불러오지 못함'; }
+        boxes().forEach(b => { b.innerHTML = `<img src="${galUrls[g.fileId]}" alt="">`; });
+        if (lbAt >= 0 && lbList[lbAt] && lbList[lbAt].fileId === g.fileId) showLb(lbAt);
+      } catch (e) { boxes().forEach(b => { b.textContent = '불러오지 못함'; }); }
     }
   };
   await Promise.all([one(), one(), one(), one()]);
 }
 
-function showLb(i) {
-  lbAt = (i + galShown.length) % galShown.length;
-  const g = galShown[lbAt];
+/* ---------- 크게 보기 (발표용 화면) ---------- */
+let lbList = [];
+function showLb(i, list) {
+  if (list) lbList = list;
+  if (!lbList.length) return;
+  lbAt = (i + lbList.length) % lbList.length;
+  const g = lbList[lbAt];
   $('#lightbox').classList.remove('hidden');
   $('#lbImg').src = galUrls[g.fileId] || '';
+  $('#lbImg').classList.toggle('hidden', !galUrls[g.fileId]);
+  $('#lbWait').classList.toggle('hidden', !!galUrls[g.fileId]);
   $('#lbName').textContent = `${g.studentId} ${g.name}`;
+  $('#lbPos').textContent = lbList.length > 1 ? `${lbAt + 1} / ${lbList.length}` : '';
+  $('#lbPrev').classList.toggle('hidden', lbList.length < 2); $('#lbNext').classList.toggle('hidden', lbList.length < 2);
+  if (!galUrls[g.fileId]) fetchImages([g]);
 }
-const closeLb = () => { lbAt = -1; $('#lightbox').classList.add('hidden'); };
+const isFull = () => !!document.fullscreenElement;
+function closeLb() {
+  lbAt = -1; $('#lightbox').classList.add('hidden');
+  if (isFull()) document.exitFullscreen().catch(() => {});
+}
+function toggleFull() {
+  if (isFull()) document.exitFullscreen().catch(() => {});
+  else if ($('#lightbox').requestFullscreen) $('#lightbox').requestFullscreen().catch(() => {});
+}
+document.addEventListener('fullscreenchange', () => { $('#lbFull').textContent = isFull() ? '전체 화면 끄기' : '⛶ 전체 화면'; });
 
 $('#galTabs').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; galClass = b.dataset.c; renderGallery(); };
-$('#galGrid').onclick = e => { const f = e.target.closest('figure'); if (f) showLb(+f.dataset.i); };
+$('#galGrid').onclick = e => { const f = e.target.closest('figure'); if (f) showLb(+f.dataset.i, galShown); };
 $('#btnGal').onclick = loadGallery;
+$('#btnShow').onclick = () => { showLb(0, galShown); toggleFull(); };
 $('#lbPrev').onclick = () => showLb(lbAt - 1);
 $('#lbNext').onclick = () => showLb(lbAt + 1);
 $('#lbClose').onclick = closeLb;
-$('#lightbox').onclick = e => { if (e.target.id === 'lightbox') closeLb(); };
-$('#lbDl').onclick = async () => { const g = galShown[lbAt]; if (g && galUrls[g.fileId])
-  download(await (await fetch(galUrls[g.fileId])).blob(), safeName(g.studentId) + '_' + safeName(g.name) + '_Infographic.jpg'); };
+$('#lbFull').onclick = toggleFull;
+$('#lightbox').onclick = e => { if (e.target.id === 'lightbox' || e.target.id === 'lbStage') closeLb(); };
 document.addEventListener('keydown', e => {
   if (lbAt < 0) return;
-  if (e.key === 'Escape') closeLb(); else if (e.key === 'ArrowLeft') showLb(lbAt - 1); else if (e.key === 'ArrowRight') showLb(lbAt + 1);
+  if (e.key === 'Escape') closeLb();
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showLb(lbAt - 1); }
+  else if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); showLb(lbAt + 1); }
 });
 
 /* ===================== 화면 전환 · 시작 ===================== */
@@ -921,7 +854,7 @@ function renderLock() {
     try { j = await fetchRecords(pw); } catch (err) { $('#pwMsg').textContent = '확인하지 못했습니다. 인터넷 연결을 확인하세요.'; return; }
     if (!j.ok) { $('#pwMsg').textContent = j.error === 'key' ? '비밀번호가 맞지 않습니다.' : '확인하지 못했습니다: ' + j.error; $('#pw1').value = ''; return; }
     teacherKey = pw;
-    for (const d of j.records) if (d && d.studentId) await mergeRecord(d, null);   // 열면서 온라인 기록도 바로 불러온다
+    setRecords(j.records);   // 열면서 학생 기록도 바로 불러온다
     showMode();
   };
 }
@@ -934,7 +867,6 @@ function showMode() {
   $('#btnMode').classList.toggle('hidden', !teacher);
   $('#btnTeacher').classList.toggle('hidden', teacher);
   $('#btnReset').classList.toggle('hidden', teacher);
-  $('#btnDraft').classList.toggle('hidden', teacher);
   $('#sync').classList.toggle('hidden', teacher);
   $('#who').classList.toggle('hidden', teacher);
   if (!teacher) { teacherKey = ''; subs = []; curId = null; $('#tBody').innerHTML = ''; renderDetail();
@@ -943,8 +875,7 @@ function showMode() {
     return; }
   if (!teacherKey) { renderLock(); return; }
   $('#tLock').classList.add('hidden'); $('#tMain').classList.remove('hidden');
-  $('#gCard').classList.toggle('hidden', !SHEET_URL);
-  loadSubs().then(renderTeacher);
+  renderTeacher();
   if (!gal.length) loadGallery();
 }
 $('#btnMode').onclick = () => { location.hash = ''; };
