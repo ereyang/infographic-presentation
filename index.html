@@ -99,6 +99,22 @@
   td.y { color: var(--ok); font-weight: 700; } td.n { color: #b0b5c8; }
   td button.link { border: 0; background: none; color: var(--main-dark); text-decoration: underline; padding: 0; }
   tr.cur { background: var(--main-soft); }
+  /* 반별 그래픽 열람 */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
+  .tabs button.sel { background: var(--main); border-color: var(--main); color: #fff; }
+  .gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .gal figure { margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: zoom-in; background: var(--card); }
+  .gal figure:hover { border-color: var(--main); }
+  .gal .ph { height: 220px; background: #f0f2f8; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; color: var(--sub); font-size: 14px; }
+  .gal .ph img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .gal figcaption { padding: 6px 10px; font-size: 14px; }
+  .gal figcaption small { display: block; color: var(--sub); font-size: 12px; }
+  #lightbox { position: fixed; inset: 0; background: rgba(15, 18, 35, .92); z-index: 50; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 16px; color: #fff; }
+  #lightbox img { max-width: 100%; max-height: calc(100vh - 110px); border-radius: 8px; background: #fff; }
+  #lightbox .lbbar { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
+  #lightbox .lbbar b { min-width: 140px; text-align: center; }
   .hidden { display: none !important; }
   @media (max-width: 600px) { dl.sum { grid-template-columns: 1fr; gap: 2px; } dl.sum dd { margin-bottom: 10px; } .card { padding: 18px; } }
 </style>
@@ -154,9 +170,21 @@
       </div>
     </div>
     <div class="card hidden" id="tDetail" style="margin-top:16px"></div>
+    <div class="card" id="gCard" style="margin-top:16px">
+      <h2><small>GALLERY</small>반별 그래픽 열람</h2>
+      <p class="hint">학생이 STEP 4에서 그래픽을 올리면 여기로 자동으로 모입니다. 반을 고르고, 그림을 누르면 크게 볼 수 있습니다.</p>
+      <div class="tools"><b id="galInfo"></b><span style="flex:1"></span><button id="btnGal" class="small">새로 고침</button></div>
+      <div class="tabs" id="galTabs"></div>
+      <div class="gal" id="galGrid"></div>
+    </div>
     </div>
   </section>
 </main>
+<div id="lightbox" class="hidden">
+  <img id="lbImg" alt="">
+  <div class="lbbar"><button id="lbPrev">← 이전</button><b id="lbName"></b><button id="lbNext">다음 →</button>
+    <button id="lbDl" class="small">다운로드</button><button id="lbClose" class="small">닫기 ✕</button></div>
+</div>
 
 <script>
 /* ===================== 설정 ===================== */
@@ -299,7 +327,7 @@ const CHECK4 = ['핵심 메시지가 잘 드러나는가?', '선택한 Graphic O
 const CHECK6 = ['학번과 이름이 정확한가?', '내용 입력을 완료했는가?', 'Graphic Organizer를 적절하게 선택했는가?', '디자인 프롬프트를 작성했는가?', '완성된 그래픽을 업로드했는가?', '영어 발표 녹음을 완료했는가?'];
 const LS_KEY = 'infographic-presentation-v1';
 const blank = () => ({ step: 0, studentId: '', name: '', title: '', mainMessage: '', keyInfo: [''], organizer: '',
-  prompt: '', check4: [], check6: [], audioSec: 0, videoExt: '', submittedAt: '' });
+  prompt: '', check4: [], check6: [], audioSec: 0, videoExt: '', submittedAt: '', graphicSentFor: '' });
 
 let state = blank();
 try { state = Object.assign(blank(), JSON.parse(localStorage.getItem(LS_KEY) || '{}')); } catch (e) {}
@@ -407,7 +435,8 @@ const VIEWS = [
   () => head(4, '최종 그래픽 업로드') +
     `<div class="guide"><p>외부에서 그래픽을 완성한 후 이곳에 업로드하세요.</p>
      <p>ChatGPT, Claude, Canva 등의 도구를 활용하여 그래픽을 제작할 수 있습니다.</p>
-     <p>그래픽에는 최종적으로 사용할 영어 텍스트를 모두 포함하세요.</p></div>
+     <p>그래픽에는 최종적으로 사용할 영어 텍스트를 모두 포함하세요.</p>
+     ${SHEET_URL ? '<p>업로드한 그래픽은 선생님 화면으로 자동 전송됩니다. 이미지를 바꾸면 새 이미지로 바뀝니다.</p>' : ''}</div>
      <h3>업로드 전 체크리스트</h3>
      <ul class="checks" id="check4">${CHECK4.map((c, i) => `<li><label><input type="checkbox" data-i="${i}" ${state.check4[i] ? 'checked' : ''}>${c}</label></li>`).join('')}</ul>
      <input type="file" id="gfile" accept="image/*" class="hidden">
@@ -485,7 +514,7 @@ const BIND = [
       const f = e.target.files[0]; if (!f) return;
       try {
         await setMedia('graphic', await toPng(f));
-        await setMedia('video', null); state.videoExt = ''; save();   // 그래픽이 바뀌면 영상도 다시 만들어야 한다
+        await setMedia('video', null); state.videoExt = ''; state.graphicSentFor = ''; save();   // 그래픽이 바뀌면 영상도 다시 만들어야 한다
         render();
       } catch (err) { $('#msg').textContent = '이미지를 읽을 수 없습니다. PNG 또는 JPG 파일을 올려 주세요.'; }
     };
@@ -627,9 +656,44 @@ async function syncNow(leaving) {
     const j = await r.json();
     if (!j.ok) throw new Error(j.error);
     const d = new Date(); el.className = ''; el.textContent = '☁ 기록 전송됨 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 기록 전송 실패 (인터넷 확인)'; }
+  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 기록 전송 실패 (인터넷 확인)'; return; }
+  if (!leaving) sendGraphic();
 }
 window.addEventListener('pagehide', () => { if (syncTimer) syncNow(true); });
+
+// 그래픽 이미지를 선생님 화면용으로 전송 (학번·이름이 바뀌면 다시 보낸다)
+let sendingGraphic = false;
+async function sendGraphic() {
+  const who = baseName(state);
+  if (sendingGraphic || !media.graphic || state.graphicSentFor === who) return;
+  sendingGraphic = true;
+  const el = $('#sync');
+  try {
+    el.className = ''; el.textContent = '☁ 그래픽 전송 중…';
+    const blob = media.graphic, data = await toJpegBase64(blob);
+    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'image', studentId: state.studentId.trim(), name: state.name.trim(), mime: 'image/jpeg', data }) });
+    const j = await r.json();
+    if (!j.ok && j.error === 'action') { el.textContent = '☁ 기록 전송됨'; sendingGraphic = false; return; }   // 서버가 아직 그래픽 받기 전 버전
+    if (!j.ok) throw new Error(j.error);
+    if (media.graphic === blob) { state.graphicSentFor = who; localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    const d = new Date(); el.textContent = '☁ 그래픽 전송됨 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } catch (e) { el.className = 'fail'; el.textContent = '⚠ 그래픽 전송 실패 (다시 시도합니다)'; }
+  sendingGraphic = false;
+  if (media.graphic && state.graphicSentFor !== baseName(state) && el.className !== 'fail') sendGraphic();   // 전송 중에 이미지가 바뀐 경우
+}
+// 긴 변 2000px JPEG 로 줄여 보낸다 (투명 부분은 흰색)
+async function toJpegBase64(blob) {
+  const img = await createImageBitmap(blob);
+  const s = Math.min(1, 2000 / Math.max(img.width, img.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+  const jpg = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('변환 실패')), 'image/jpeg', 0.9));
+  const url = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(jpg); });
+  return url.slice(url.indexOf(',') + 1);
+}
 
 // final=true: 최종 제출 파일, false: 지금까지 한 작업만 담은 중간 저장 파일
 async function buildPackage(final) {
@@ -784,6 +848,86 @@ $('#btnClear').onclick = async () => {
   await idbClear('subs'); curId = null; await loadSubs(); renderTeacher();
 };
 
+/* ---------- 반별 그래픽 열람 (온라인으로 받은 그래픽) ---------- */
+let gal = [], galClass = '', galShown = [], lbAt = -1;
+const galUrls = {};   // fileId → 이미지 주소 (한 번 받은 것은 다시 받지 않음)
+// 학번 20215 → 2학년 2반 (5자리가 아니면 끝 두 자리를 뺀 앞부분)
+const classOf = id => { const s = String(id).trim();
+  return /^\d{5}$/.test(s) ? `${s[0]}학년 ${+s.slice(1, 3)}반` : s.length > 2 ? s.slice(0, -2) : '기타'; };
+const byId = (a, b) => String(a.studentId).localeCompare(String(b.studentId), 'ko', { numeric: true });
+
+async function loadGallery() {
+  if (!SHEET_URL || !teacherKey) return;
+  $('#galInfo').textContent = '그래픽 목록을 불러오는 중…';
+  try {
+    const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'images', key: teacherKey }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error === 'action' ? 'Apps Script 를 새 버전으로 배포해야 합니다' : j.error);
+    gal = j.images.sort(byId);
+  } catch (e) { $('#galInfo').textContent = '그래픽 목록을 불러오지 못했습니다: ' + (e.message || e); return; }
+  const classes = [...new Set(gal.map(g => classOf(g.studentId)))];
+  if (!classes.includes(galClass)) galClass = classes[0] || '';
+  renderGallery();
+}
+
+function renderGallery() {
+  const classes = [...new Set(gal.map(g => classOf(g.studentId)))];
+  $('#galInfo').textContent = `받은 그래픽: ${gal.length}장`;
+  $('#galTabs').innerHTML = classes.map(c =>
+    `<button class="small ${c === galClass ? 'sel' : ''}" data-c="${esc(c)}">${esc(c)} (${gal.filter(g => classOf(g.studentId) === c).length})</button>`).join('');
+  galShown = gal.filter(g => classOf(g.studentId) === galClass);
+  $('#galGrid').innerHTML = galShown.length ? galShown.map((g, i) => `<figure data-i="${i}">
+      <div class="ph" data-f="${esc(g.fileId)}">${galUrls[g.fileId] ? `<img src="${galUrls[g.fileId]}" alt="">` : '불러오는 중…'}</div>
+      <figcaption><b>${esc(g.studentId)} ${esc(g.name)}</b><small>${esc(g.at)}</small></figcaption></figure>`).join('')
+    : '<p class="hint">아직 받은 그래픽이 없습니다.</p>';
+  fetchImages(galShown.filter(g => !galUrls[g.fileId]));
+}
+
+// 4장씩 동시에 받아 온다
+async function fetchImages(list) {
+  const q = list.slice();
+  const one = async () => {
+    for (let g; (g = q.shift());) {
+      const box = () => document.querySelector(`.ph[data-f="${CSS.escape(g.fileId)}"]`);
+      try {
+        const r = await fetch(SHEET_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'img', key: teacherKey, fileId: g.fileId }) });
+        const j = await r.json();
+        if (!j.ok) throw new Error(j.error);
+        const bin = Uint8Array.from(atob(j.data), c => c.charCodeAt(0));
+        galUrls[g.fileId] = URL.createObjectURL(new Blob([bin], { type: j.mime }));
+        if (box()) box().innerHTML = `<img src="${galUrls[g.fileId]}" alt="">`;
+        if (lbAt >= 0 && galShown[lbAt] === g) showLb(lbAt);
+      } catch (e) { if (box()) box().textContent = '불러오지 못함'; }
+    }
+  };
+  await Promise.all([one(), one(), one(), one()]);
+}
+
+function showLb(i) {
+  lbAt = (i + galShown.length) % galShown.length;
+  const g = galShown[lbAt];
+  $('#lightbox').classList.remove('hidden');
+  $('#lbImg').src = galUrls[g.fileId] || '';
+  $('#lbName').textContent = `${g.studentId} ${g.name}`;
+}
+const closeLb = () => { lbAt = -1; $('#lightbox').classList.add('hidden'); };
+
+$('#galTabs').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; galClass = b.dataset.c; renderGallery(); };
+$('#galGrid').onclick = e => { const f = e.target.closest('figure'); if (f) showLb(+f.dataset.i); };
+$('#btnGal').onclick = loadGallery;
+$('#lbPrev').onclick = () => showLb(lbAt - 1);
+$('#lbNext').onclick = () => showLb(lbAt + 1);
+$('#lbClose').onclick = closeLb;
+$('#lightbox').onclick = e => { if (e.target.id === 'lightbox') closeLb(); };
+$('#lbDl').onclick = async () => { const g = galShown[lbAt]; if (g && galUrls[g.fileId])
+  download(await (await fetch(galUrls[g.fileId])).blob(), safeName(g.studentId) + '_' + safeName(g.name) + '_Infographic.jpg'); };
+document.addEventListener('keydown', e => {
+  if (lbAt < 0) return;
+  if (e.key === 'Escape') closeLb(); else if (e.key === 'ArrowLeft') showLb(lbAt - 1); else if (e.key === 'ArrowRight') showLb(lbAt + 1);
+});
+
 /* ===================== 화면 전환 · 시작 ===================== */
 /* ---------- 교사 화면 비밀번호 = Apps Script 의 TEACHER_KEY (서버에서 확인, 기기에 저장하지 않음) ---------- */
 let teacherKey = '';   // 맞는 비밀번호를 넣으면 이 창이 열려 있는 동안만 기억한다
@@ -824,10 +968,15 @@ function showMode() {
   $('#btnDraft').classList.toggle('hidden', teacher);
   $('#sync').classList.toggle('hidden', teacher);
   $('#who').classList.toggle('hidden', teacher);
-  if (!teacher) { teacherKey = ''; subs = []; curId = null; $('#tBody').innerHTML = ''; renderDetail(); return; }
+  if (!teacher) { teacherKey = ''; subs = []; curId = null; $('#tBody').innerHTML = ''; renderDetail();
+    gal = []; galShown = []; closeLb(); $('#galTabs').innerHTML = $('#galGrid').innerHTML = '';
+    for (const k in galUrls) { URL.revokeObjectURL(galUrls[k]); delete galUrls[k]; }
+    return; }
   if (!teacherKey) { renderLock(); return; }
   $('#tLock').classList.add('hidden'); $('#tMain').classList.remove('hidden');
+  $('#gCard').classList.toggle('hidden', !SHEET_URL);
   loadSubs().then(renderTeacher);
+  if (!gal.length) loadGallery();
 }
 $('#btnMode').onclick = () => { location.hash = ''; };
 $('#btnTeacher').onclick = () => { location.hash = '#teacher'; };
@@ -836,6 +985,7 @@ window.onhashchange = showMode;
 (async () => {
   try { for (const k of Object.keys(media)) media[k] = (await idbGet('blobs', k)) || null; } catch (e) {}
   render(); showMode();
+  queueSync();   // 아직 보내지 못한 그래픽이 있으면 보낸다
 })();
 </script>
 </body>
