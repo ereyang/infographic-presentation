@@ -466,7 +466,7 @@ const VIEWS = [
        <p class="sc-fixed">Hello, everyone.</p>
        ${SCRIPT.map(([k, lead, tag, ex], i) => `<div class="sc-line">
          <div class="sc-lead"><span class="sc-num">${i + 1}</span><span>${lead}</span><span class="sc-tag">${tag}</span></div>
-         <label class="blank"><textarea rows="1" data-k="${k}" placeholder="${esc(k === 'scTopic' && state.title.trim() ? state.title.trim() : '')}" aria-label="${esc(lead)} — ${tag}"></textarea><b>.</b></label>
+         <label class="blank"><textarea rows="1" data-k="${k}" aria-label="${esc(lead)} — ${tag}"></textarea><b>.</b></label>
          <p class="sc-ex">${esc(ex)}</p></div>`).join('')}
        <p class="sc-fixed">Thank you for listening.</p>
      </div>
