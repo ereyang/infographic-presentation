@@ -33,7 +33,7 @@
 
   /* 진행 표시줄 */
   #stepper { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 18px; overflow-x: auto; }
-  #stepper li { flex: 1; min-width: 96px; }
+  #stepper li { flex: 1; min-width: 84px; }
   #stepper button { width: 100%; padding: 8px 4px; font-size: 13px; border-radius: 12px;
     display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--sub); }
   #stepper .num { width: 26px; height: 26px; border-radius: 50%; background: var(--line); color: var(--sub);
@@ -99,6 +99,32 @@
   td.y { color: var(--ok); font-weight: 700; } td.n { color: #b0b5c8; }
   td button.link { border: 0; background: none; color: var(--main-dark); text-decoration: underline; padding: 0; }
   tr.cur { background: var(--main-soft); }
+  /* 영어 발표 대본 */
+  .script { background: #fffdf7; border: 1px solid #ece4cf; border-radius: 16px; padding: 26px 28px 22px; margin-top: 6px;
+    box-shadow: 0 2px 0 #ece4cf, 0 10px 24px rgba(31, 37, 64, .06);
+    font-family: Georgia, "Times New Roman", "Noto Serif KR", serif; font-size: 18px; }
+  .script .sc-title { font-size: 21px; font-weight: 700; text-align: center; letter-spacing: .02em; margin-bottom: 18px;
+    padding-bottom: 12px; border-bottom: 2px solid #e8dcc0; color: var(--ink); }
+  .script .sc-title small { display: block; font: 600 12px/1.4 "Pretendard", "Malgun Gothic", sans-serif; color: #a08a55; letter-spacing: .14em; }
+  .script .sc-fixed { margin: 6px 0; color: #4a4f6a; }
+  .script .sc-line { margin: 16px 0; }
+  .script .sc-lead { display: flex; align-items: center; gap: 8px; }
+  .script .sc-num { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--main); color: #fff;
+    display: grid; place-items: center; font: 700 13px "Pretendard", "Malgun Gothic", sans-serif; }
+  .script .sc-tag { font: 600 13px "Pretendard", "Malgun Gothic", sans-serif; color: var(--main-dark); background: var(--main-soft);
+    padding: 2px 10px; border-radius: 999px; margin-left: auto; white-space: nowrap; }
+  .script .blank { display: flex; align-items: flex-end; gap: 4px; margin: 6px 0 0 34px; }
+  .script .blank textarea { font: inherit; border: 0; border-bottom: 2px dashed #b9c0e6; border-radius: 0; background: transparent;
+    padding: 4px 2px; min-height: 0; resize: none; overflow: hidden; color: var(--main-dark); flex: 1; width: auto; }
+  .script .blank textarea:focus { outline: 0; border-bottom: 2px solid var(--main); background: var(--main-soft); }
+  .script .blank textarea.filled { border-bottom-style: solid; border-bottom-color: #8fd3b4; }
+  .script .blank b { font-size: 20px; padding-bottom: 6px; }
+  .script .sc-ex { margin: 4px 0 0 34px; font: 13px/1.5 "Pretendard", "Malgun Gothic", sans-serif; color: var(--sub); }
+  .read { background: #f6f7fc; border-left: 4px solid var(--main); border-radius: 10px; padding: 14px 18px; margin-top: 10px;
+    font-family: Georgia, "Times New Roman", serif; font-size: 17px; line-height: 1.8; white-space: pre-wrap; }
+  .read .gap { color: #b0b5c8; }
+  @media (max-width: 600px) { .script { padding: 18px 16px; font-size: 16px; } .script .blank, .script .sc-ex { margin-left: 0; } }
+
   /* 반별 그래픽 열람 */
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
   .tabs button.sel { background: var(--main); border-color: var(--main); color: #fff; }
@@ -142,7 +168,7 @@
     <div class="card">
       <h2><small>TEACHER</small>교사용 Dashboard</h2>
       <div class="guide">
-        <p><b>[온라인 기록 불러오기]</b>(자동 수집을 설정한 경우에만 보임)를 누르면 학생이 파일을 내지 않아도 지금까지 입력한 글 기록이 모두 표에 나타납니다. 그래픽·녹음·영상은 아래의 제출 파일로 받습니다.</p>
+        <p><b>[온라인 기록 불러오기]</b>(자동 수집을 설정한 경우에만 보임)를 누르면 학생이 파일을 내지 않아도 지금까지 입력한 글 기록이 모두 표에 나타납니다. 그래픽은 아래 [반별 그래픽 열람]에서 보거나 제출 파일로 받습니다.</p>
         <p>학생들이 낸 <b>제출 파일(학번_이름_제출.zip)</b>을 한꺼번에 불러오세요. 아직 끝내지 못한 학생은 학생 화면의 [중간 저장 파일] 버튼으로 만든 <b>학번_이름_중간저장.zip</b>을 내면, 그때까지 한 작업이 표와 Excel에 나타납니다. 여러 파일을 한 번에 선택하거나 아래 칸에 끌어다 놓을 수 있습니다.</p>
         <p>불러온 자료는 이 브라우저에 보관되어 다시 열어도 유지됩니다. 같은 학번을 다시 불러오면 더 늦게 제출한 파일로 바뀝니다.</p>
       </div>
@@ -157,14 +183,13 @@
         <button id="btnOnline" class="primary hidden">온라인 기록 불러오기</button>
         <button id="btnXlsx">전체 학생 결과 Excel 다운로드</button>
         <button id="btnZipG">전체 그래픽 ZIP 다운로드</button>
-        <button id="btnZipV">전체 발표 영상 ZIP 다운로드</button>
         <button id="btnClear" class="small">전체 비우기</button>
       </div>
       <div class="msg" id="tMsg"></div>
       <p class="hint">✓ 교사가 받은 자료 · ○ 학생 기기에서는 완료했지만 파일은 아직 받지 않음 · - 아직 안 함</p>
       <div class="tablewrap">
         <table>
-          <thead><tr><th>학번</th><th>이름</th><th>내용</th><th>Organizer</th><th>Prompt</th><th>Graphic</th><th>발표</th><th>제출</th></tr></thead>
+          <thead><tr><th>학번</th><th>이름</th><th>내용</th><th>Organizer</th><th>Prompt</th><th>Graphic</th><th>Script</th><th>제출</th></tr></thead>
           <tbody id="tBody"></tbody>
         </table>
       </div>
@@ -300,7 +325,7 @@ async function makeXlsx(rows) {
   const sheet = rows.map((r, ri) => `<row r="${ri + 1}">` + r.map((v, ci) =>
     `<c r="${col(ci)}${ri + 1}" t="inlineStr"${ri === 0 ? ' s="1"' : ''}><is><t xml:space="preserve">${x(v)}</t></is></c>`).join('') + '</row>').join('');
   const H = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-  const widths = [10, 10, 28, 40, 50, 20, 60, 10, 18, 30, 32, 18];
+  const widths = [10, 10, 28, 40, 50, 20, 60, 60, 10, 18, 30, 18];
   const blob = await makeZip([
     { name: '[Content_Types].xml', blob: H + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
     { name: '_rels/.rels', blob: H + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
@@ -313,7 +338,7 @@ async function makeXlsx(rows) {
 }
 
 /* ===================== 학생 화면 ===================== */
-const STEPS = ['학생 정보', '내용 정리', 'Organizer', 'Design Prompt', 'Graphic', '제출'];
+const STEPS = ['학생 정보', '내용 정리', 'Organizer', 'Design Prompt', 'Graphic', 'Script', '제출'];
 const ORGS = [
   ['Statistics', '📊', '숫자나 비율 등의 통계 자료를 효과적으로 보여줄 때'],
   ['Compare & Contrast', '⚖️', '두 가지 이상의 대상의 공통점과 차이점을 보여줄 때'],
@@ -323,10 +348,24 @@ const ORGS = [
   ['Problem & Solution', '💡', '문제와 그 해결 방법을 보여줄 때'],
 ];
 const CHECK4 = ['핵심 메시지가 잘 드러나는가?', '선택한 Graphic Organizer가 잘 표현되었는가?', '영어 문장과 단어의 오류가 없는가?', '글자가 잘 보이는가?', '필요한 정보가 빠짐없이 들어갔는가?'];
-const CHECK6 = ['학번과 이름이 정확한가?', '내용 입력을 완료했는가?', 'Graphic Organizer를 적절하게 선택했는가?', '디자인 프롬프트를 작성했는가?', '완성된 그래픽을 업로드했는가?'];
+const CHECK6 = ['학번과 이름이 정확한가?', '내용 입력을 완료했는가?', 'Graphic Organizer를 적절하게 선택했는가?', '디자인 프롬프트를 작성했는가?', '완성된 그래픽을 업로드했는가?', '영어 발표 대본을 완성했는가?'];
+// 영어 발표 대본: [state 키, 앞 문장, 빈칸 안내, 예시]
+const SCRIPT = [
+  ['scTopic', 'Today, I’m going to talk about', '주제', 'e.g. teenagers’ smartphone use'],
+  ['scMessage', 'My main message is that', '주제를 풀어서 문장으로 쓰기', 'e.g. too much smartphone use can harm our health'],
+  ['scDetail', 'As you can see in my infographic,', '세부사항 하나 이상 문장으로 언급', 'e.g. 85% of teenagers use their phones for more than 3 hours a day.'],
+];
+// 빈칸을 채운 완성 대본 (빈칸이 남아 있으면 gap 으로 표시)
+function scriptText(gap = '') {
+  const v = k => state[k].trim().replace(/\s+/g, ' ');
+  const end = s => s && !/[.!?]$/.test(s) ? s + '.' : s;
+  return ['Hello, everyone.',
+    ...SCRIPT.map(([k, lead]) => v(k) ? `${lead} ${end(k === 'scDetail' ? v(k) : v(k).replace(/[.]+$/, ''))}` : gap && `${lead} ${gap}`).filter(Boolean),
+    'Thank you for listening.'].join('\n');
+}
 const LS_KEY = 'infographic-presentation-v1';
 const blank = () => ({ step: 0, studentId: '', name: '', title: '', mainMessage: '', keyInfo: [''], organizer: '',
-  prompt: '', check4: [], check6: [], audioSec: 0, videoExt: '', submittedAt: '', graphicSentFor: '' });
+  prompt: '', check4: [], check6: [], audioSec: 0, videoExt: '', submittedAt: '', graphicSentFor: '', scTopic: '', scMessage: '', scDetail: '' });
 
 let state = blank();
 try { state = Object.assign(blank(), JSON.parse(localStorage.getItem(LS_KEY) || '{}')); } catch (e) {}
@@ -342,7 +381,7 @@ async function setMedia(key, blob) {
 }
 const mediaUrl = key => media[key] ? (urls[key] ||= URL.createObjectURL(media[key])) : '';
 
-// 각 단계 완료 여부 (0~4)
+// 각 단계 완료 여부 (0~5)
 function doneList() {
   return [
     !!(state.studentId.trim() && state.name.trim()),
@@ -350,10 +389,12 @@ function doneList() {
     !!state.organizer,
     !!state.prompt.trim(),
     !!media.graphic,
+    SCRIPT.every(([k]) => state[k].trim()),
   ];
 }
 const NEED = ['학번과 이름을 모두 입력하세요.', 'Title, Main Message를 입력하고 Key Information을 하나 이상 입력하세요.',
-  'Graphic Organizer를 하나 선택하세요.', '그래픽 디자인 프롬프트를 작성하세요.', '완성한 그래픽 이미지를 업로드하세요.'];
+  'Graphic Organizer를 하나 선택하세요.', '그래픽 디자인 프롬프트를 작성하세요.', '완성한 그래픽 이미지를 업로드하세요.',
+  '발표 대본의 빈칸 세 곳을 모두 채우세요.'];
 const LAST = STEPS.length - 1;   // 제출 단계
 state.step = Math.min(state.step, LAST);   // 예전 7단계 버전에서 쓰던 학생
 
@@ -442,11 +483,26 @@ const VIEWS = [
      <button class="primary" id="gpick">${media.graphic ? '이미지 교체' : '이미지 업로드'}</button>
      ${media.graphic ? `<div class="preview"><img src="${mediaUrl('graphic')}" alt="업로드한 그래픽 미리보기"></div>` : ''}`,
 
+  () => head(5, '영어 발표 대본 작성') +
+    `<div class="guide"><p>완성한 인포그래픽을 소개하는 짧은 영어 발표 대본을 만들어 보세요.</p>
+     <p>번호가 붙은 빈칸 세 곳을 영어로 채우면 아래에 완성된 대본이 나타납니다. 마침표는 자동으로 붙습니다.</p></div>
+     <div class="script">
+       <div class="sc-title"><small>MY SCRIPT</small>Infographic Presentation Script</div>
+       <p class="sc-fixed">Hello, everyone.</p>
+       ${SCRIPT.map(([k, lead, tag, ex], i) => `<div class="sc-line">
+         <div class="sc-lead"><span class="sc-num">${i + 1}</span><span>${lead}</span><span class="sc-tag">${tag}</span></div>
+         <label class="blank"><textarea rows="1" data-k="${k}" placeholder="${esc(k === 'scTopic' && state.title.trim() ? state.title.trim() : '')}" aria-label="${esc(lead)} — ${tag}"></textarea><b>.</b></label>
+         <p class="sc-ex">${esc(ex)}</p></div>`).join('')}
+       <p class="sc-fixed">Thank you for listening.</p>
+     </div>
+     <h3>완성된 대본</h3>
+     <div class="read" id="scRead"></div>`,
+
   () => {
     const d = doneList(), all = d.every(Boolean);
     const v = (ok, html) => ok ? `<dd>${html}</dd>` : '<dd class="empty">아직 입력하지 않았습니다</dd>';
     const keys = state.keyInfo.filter(k => k.trim());
-    return head(5, '최종 제출') +
+    return head(6, '최종 제출') +
     `<div class="guide"><p>지금까지 작업한 내용을 확인하세요. 고칠 곳이 있으면 위의 단계를 눌러 수정할 수 있습니다.</p>
      <p><b>① 체크리스트 확인 → ② 최종 제출</b> 순서로 진행합니다. [최종 제출]을 누르면 제출 파일(ZIP)이 내려받아지고, <b>그 파일을 선생님께 내야 제출이 끝납니다.</b></p></div>
      <dl class="sum">
@@ -458,6 +514,7 @@ const VIEWS = [
        <dt>Graphic Organizer</dt>${v(d[2], esc(state.organizer))}
        <dt>Graphic Design Prompt</dt>${v(d[3], esc(state.prompt))}
        <dt>Final Graphic</dt>${v(d[4], `<img src="${mediaUrl('graphic')}" alt="최종 그래픽">`)}
+       <dt>Presentation Script</dt>${v(d[5], esc(scriptText()))}
      </dl>
      <h3>① 최종 확인 체크리스트</h3>
      <ul class="checks" id="check6">${CHECK6.map((c, i) => `<li><label><input type="checkbox" data-i="${i}" ${state.check6[i] ? 'checked' : ''}>${c}</label></li>`).join('')}</ul>
@@ -503,6 +560,17 @@ const BIND = [
   },
 
   () => {
+    const fit = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+    const read = () => { $('#scRead').innerHTML = esc(scriptText('\u0000')).replace(/\u0000/g, '<span class="gap">________</span>'); };
+    document.querySelectorAll('.script textarea').forEach(t => {
+      t.value = state[t.dataset.k]; t.classList.toggle('filled', !!t.value.trim()); fit(t);
+      t.oninput = () => { state[t.dataset.k] = t.value.replace(/\n/g, ' '); t.classList.toggle('filled', !!t.value.trim()); fit(t); read(); save(); };
+      t.onkeydown = e => { if (e.key === 'Enter') e.preventDefault(); };   // 한 줄로 쓰게 한다 (길면 자동 줄바꿈)
+    });
+    read();
+  },
+
+  () => {
     bindChecks('#check6', 'check6');
     $('#submit').onclick = submit;
   },
@@ -537,6 +605,8 @@ function recordData() {
     app: 'infographic-presentation', version: 1,
     studentId: state.studentId.trim(), name: state.name.trim(), title: state.title.trim(), mainMessage: state.mainMessage.trim(),
     keyInformation: state.keyInfo.map(k => k.trim()).filter(Boolean), organizer: state.organizer, designPrompt: state.prompt.trim(),
+    presentationScript: doneList()[5] ? scriptText() : '',
+    script: { topic: state.scTopic.trim(), mainMessage: state.scMessage.trim(), detail: state.scDetail.trim() },
     hasGraphic: !!media.graphic, hasAudio: false, hasVideo: false,
     submittedAt: state.submittedAt, savedAt: new Date().toISOString(),
   };
@@ -610,6 +680,7 @@ async function buildPackage(final) {
   };
   const files = [{ name: 'data.json', blob: JSON.stringify(data, null, 2) }];
   if (media.graphic) files.push({ name: data.graphicFile, blob: media.graphic });
+  if (data.presentationScript) files.push({ name: base + '_Script.txt', blob: data.presentationScript });
   download(await makeZip(files), base + (final ? '_제출.zip' : '_중간저장.zip'));
 }
 
@@ -690,9 +761,9 @@ function renderTeacher() {
   const m = (ok, remote) => ok ? '<td class="y">✓</td>' : remote ? '<td>○</td>' : '<td class="n">-</td>';
   $('#tBody').innerHTML = subs.length ? subs.map(s => { const d = s.data; return `<tr class="${String(d.studentId) === curId ? 'cur' : ''}">
     <td>${esc(d.studentId)}</td><td><button class="link" data-id="${esc(d.studentId)}">${esc(d.name)}</button></td>
-    ${m(d.title && d.mainMessage && (d.keyInformation || []).length)}${m(d.organizer)}${m(d.designPrompt)}${m(s.graphic, d.hasGraphic)}${m(s.audio, d.hasAudio)}${m(d.submittedAt)}</tr>`; }).join('')
+    ${m(d.title && d.mainMessage && (d.keyInformation || []).length)}${m(d.organizer)}${m(d.designPrompt)}${m(s.graphic, d.hasGraphic)}${m(d.presentationScript)}${m(d.submittedAt)}</tr>`; }).join('')
     : '<tr><td colspan="8" class="n">아직 불러온 제출 파일이 없습니다.</td></tr>';
-  for (const id of ['#btnXlsx', '#btnZipG', '#btnZipV', '#btnClear']) $(id).disabled = !subs.length;
+  for (const id of ['#btnXlsx', '#btnZipG', '#btnClear']) $(id).disabled = !subs.length;
   renderDetail();
 }
 
@@ -713,10 +784,9 @@ function renderDetail() {
       <dt>Graphic Organizer</dt><dd>${esc(d.organizer)}</dd>
       <dt>Graphic Design Prompt</dt><dd>${esc(d.designPrompt)}</dd>
       <dt>Final Graphic</dt>${s.graphic ? `<dd><img src="${u(s.graphic)}" alt="최종 그래픽"><br><button class="small" data-dl="graphic">그래픽 다운로드</button></dd>` : none}
-      <dt>Presentation Recording</dt>${s.audio ? `<dd><audio controls src="${u(s.audio)}"></audio></dd>` : none}
-      <dt>Final Presentation Video</dt>${s.video ? `<dd><video controls src="${u(s.video)}"></video><br><button class="small" data-dl="video">영상 다운로드</button></dd>` : none}
+      <dt>Presentation Script</dt>${d.presentationScript ? `<dd>${esc(d.presentationScript)}</dd>` : none}
     </dl>`;
-  box.onclick = e => { const k = e.target.dataset.dl; if (k) download(s[k], k === 'graphic' ? d.graphicFile : d.videoFile); };
+  box.onclick = e => { if (e.target.dataset.dl) download(s.graphic, d.graphicFile); };
 }
 
 $('#tBody').onclick = e => { const b = e.target.closest('[data-id]'); if (!b) return; curId = b.dataset.id; renderTeacher(); $('#tDetail').scrollIntoView({ behavior: 'smooth' }); };
@@ -730,10 +800,10 @@ drop.ondragleave = () => drop.classList.remove('over');
 drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); importZips([...e.dataTransfer.files]); };
 
 $('#btnXlsx').onclick = async () => {
-  const rows = [['학번', '이름', 'Title', 'Main Message', 'Key Information', 'Graphic Organizer', 'Graphic Design Prompt', '제출 여부', '제출 시간', '최종 그래픽 파일명', '최종 발표 영상 파일명', '파일 저장 시간']];
+  const rows = [['학번', '이름', 'Title', 'Main Message', 'Key Information', 'Graphic Organizer', 'Graphic Design Prompt', 'Presentation Script', '제출 여부', '제출 시간', '최종 그래픽 파일명', '파일 저장 시간']];
   for (const s of subs) { const d = s.data;
     rows.push([d.studentId, d.name, d.title, d.mainMessage, (d.keyInformation || []).map((k, i) => `${i + 1}. ${k}`).join('\n'), d.organizer, d.designPrompt,
-      d.submittedAt ? '제출' : '미제출', fmtTime(d.submittedAt), s.graphic ? d.graphicFile : '', s.video ? d.videoFile : '', fmtTime(d.savedAt || d.submittedAt)]); }
+      d.presentationScript || '', d.submittedAt ? '제출' : '미제출', fmtTime(d.submittedAt), s.graphic ? d.graphicFile : '', fmtTime(d.savedAt || d.submittedAt)]); }
   download(await makeXlsx(rows), 'Infographic_Presentation_Results.xlsx');
 };
 async function zipAll(key, fileKey, outName) {
@@ -742,7 +812,6 @@ async function zipAll(key, fileKey, outName) {
   download(await makeZip(files), outName);
 }
 $('#btnZipG').onclick = () => zipAll('graphic', 'graphicFile', 'All_Infographics.zip');
-$('#btnZipV').onclick = () => zipAll('video', 'videoFile', 'All_Presentations.zip');
 $('#btnClear').onclick = async () => {
   if (!confirm('불러온 학생 자료를 이 브라우저에서 모두 지울까요?\n(원래의 제출 ZIP 파일은 지워지지 않습니다.)')) return;
   await idbClear('subs'); curId = null; await loadSubs(); renderTeacher();
